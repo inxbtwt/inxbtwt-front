@@ -15,12 +15,13 @@ import { catchError, finalize, map, of, switchMap, Subscription, tap } from 'rxj
 import { ApiResponse } from '../../components/dto/api/api-response';
 import { UserProfile } from '../../components/dto/auth/user-profile';
 import { UserPhotoUrls } from '../../components/dto/auth/user-photo-urls';
+import { ProfilePosts } from '../../components/profile-posts/profile-posts';
 import { ProfileSearch } from '../../components/profile-search/profile-search';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-profile-page',
-  imports: [FormsModule, RouterLink, ProfileSearch],
+  imports: [FormsModule, RouterLink, ProfileSearch, ProfilePosts],
   templateUrl: './profile.page.html',
 })
 export class ProfilePage implements OnInit, OnDestroy {
@@ -161,7 +162,6 @@ export class ProfilePage implements OnInit, OnDestroy {
   protected readonly saving = signal(false);
   protected readonly loggingOut = signal(false);
   protected readonly feedback = signal('');
-  protected readonly selectedTab = signal('Publicações');
   protected readonly currentUser = this.auth.currentUser;
   protected readonly memberSince = computed(() => {
     const createdAt = this.currentUser()?.createdAt;
@@ -182,7 +182,6 @@ export class ProfilePage implements OnInit, OnDestroy {
     }).format(date);
   });
 
-  protected readonly tabs = ['Publicações', 'Respostas', 'Mídia', 'Curtidas'];
   protected name = '';
   protected username = '';
   protected photo: File | null = null;
@@ -454,9 +453,5 @@ export class ProfilePage implements OnInit, OnDestroy {
         next: () => void this.router.navigateByUrl('/auth'),
         error: () => this.feedback.set('Não foi possível sair agora. Tente novamente.'),
       });
-  }
-
-  protected selectTab(tab: string): void {
-    this.selectedTab.set(tab);
   }
 }

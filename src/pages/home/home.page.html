@@ -83,21 +83,85 @@
         <span class="banner-star star-two" aria-hidden="true">✦</span>
       </section>
 
-      <div class="feed-toolbar">
-        <h2>Seu feed</h2>
-        <span class="feed-status"><span></span> EM CONSTRUÇÃO</span>
-      </div>
-
-      <section class="empty-feed card" aria-labelledby="empty-title">
-        <span class="empty-sticker" aria-hidden="true">🫥</span>
-        <span class="empty-eyebrow">CALMA, NÃO É VOCÊ</span>
-        <h2 id="empty-title">O feed está quietinho.</h2>
-        <p>Quando houver publicações disponíveis, elas aparecem aqui. Por enquanto, aproveite o silêncio constrangedor.</p>
-        <a class="profile-button" routerLink="/profile">Ver meu perfil <span>↗</span></a>
-        <span class="empty-doodle" aria-hidden="true">〰</span>
+      <section class="post-composer card" aria-labelledby="composer-title">
+        <div class="composer-heading">
+          <span class="avatar composer-avatar">
+            @if (profilePhoto()) {
+              <img [src]="profilePhoto()" [alt]="auth.currentUser()?.name" (error)="clearPhoto()" />
+            } @else {
+              {{ initials }}
+            }
+          </span>
+          <div><h2 id="composer-title">O que tá rolando?</h2><p>Seu cantinho para compartilhar.</p></div>
+        </div>
+        <form (ngSubmit)="publish()" [attr.aria-busy]="publishing()">
+          <label class="sr-only" for="new-post-input">Escreva sua publicação</label>
+          <textarea #postInput id="new-post-input" name="content" [(ngModel)]="draft"
+            (ngModelChange)="publishError.set(''); publishSuccess.set('')"
+            placeholder="Uma ideia, uma história, um pouco de caos…" rows="4"
+            required [disabled]="publishing()"></textarea>
+          @if (publishError()) { <p class="publication-error" role="alert">{{ publishError() }}</p> }
+          @if (publishSuccess()) { <p class="publication-success" role="status">{{ publishSuccess() }}</p> }
+          <div class="composer-footer">
+            <span>Uma publicação pode começar uma conversa.</span>
+            <button type="submit" class="publish-button" [disabled]="!draft.trim() || publishing()">
+              {{ publishing() ? 'Publicando…' : 'Publicar' }} <span aria-hidden="true">↗</span>
+            </button>
+          </div>
+        </form>
       </section>
 
-      <p class="feed-note">Sem posts inventados por aqui. <span>Promessa de algoritmo.</span></p>
+      <div class="feed-toolbar">
+        <h2>Seu feed</h2>
+        <div class="feed-controls">
+          @if (strategy() === 'chronological') {
+            <span class="feed-status"><span></span> MAIS RECENTES</span>
+          }
+          <button class="refresh-feed" type="button" (click)="loadFeed()" [disabled]="loadingFeed() || publishing()">Atualizar</button>
+        </div>
+      </div>
+
+      @if (feedError()) {
+        <div class="feed-alert card" role="alert">
+          <p>{{ feedError() }}</p>
+          <button type="button" (click)="retryFeed()" [disabled]="loadingFeed()">Tentar novamente</button>
+        </div>
+      }
+      @if (loadingFeed() && !posts().length) {
+        <div class="feed-loading card" role="status">Carregando publicações…</div>
+      } @else if (!posts().length && !feedError()) {
+        <section class="empty-feed card" aria-labelledby="empty-title">
+          <span class="empty-sticker" aria-hidden="true">🫥</span>
+          <span class="empty-eyebrow">A CONVERSA COMEÇA COM VOCÊ</span>
+          <h2 id="empty-title">O feed está quietinho.</h2>
+          <p>Compartilhe sua primeira publicação e dê um pouco de vida a este cantinho.</p>
+          <button class="profile-button" type="button" (click)="focusComposer()">Escrever publicação <span aria-hidden="true">↗</span></button>
+          <span class="empty-doodle" aria-hidden="true">〰</span>
+        </section>
+      }
+
+      <div class="post-list" aria-label="Publicações" [attr.aria-busy]="loadingFeed()">
+        @for (post of posts(); track post.postId) {
+          <article class="post-card card" [attr.aria-labelledby]="'post-author-' + post.postId">
+            <header class="post-header">
+              <a class="post-author" [routerLink]="post.author.userId === auth.currentUser()?.userId ? ['/profile'] : ['/profile', post.author.username]">
+                <span class="avatar"><app-profile-image [userId]="post.author.userId" [imageUrl]="post.author.photoUrl" [name]="post.author.name" /></span>
+                <span class="post-author-info"><strong [id]="'post-author-' + post.postId">{{ post.author.name }}</strong><span>@{{ post.author.username }}</span></span>
+              </a>
+              <time [attr.datetime]="post.createdAt" [title]="post.createdAt | date:'dd/MM/yyyy HH:mm'">{{ post.createdAt | date:'dd/MM/yyyy HH:mm' }}</time>
+            </header>
+            <p class="post-content">{{ post.content }}</p>
+          </article>
+        }
+      </div>
+      @if (posts().length && hasNext()) {
+        <button class="load-more" type="button" (click)="loadFeed(false)" [disabled]="loadingFeed() || publishing()">
+          {{ loadingFeed() ? 'Carregando…' : 'Carregar mais publicações' }}
+        </button>
+      } @else if (posts().length && !feedError()) {
+        <p class="feed-note" role="status">Você chegou ao fim das publicações por enquanto.</p>
+      }
+
     </main>
 
     <aside class="right-sidebar" aria-label="Descubra coisas">
@@ -132,7 +196,7 @@
   <nav class="mobile-nav" aria-label="Navegação mobile">
     <a class="mobile-nav-item selected" routerLink="/feed"><span>⌂</span>Feed</a>
     <button class="mobile-nav-item" type="button" (click)="showToast('A aba de explorar vem aí!')"><span>⌕</span>Explorar</button>
-    <a class="mobile-create" routerLink="/profile" aria-label="Abrir seu perfil">{{ initials }}</a>
+    <button class="mobile-create" type="button" (click)="focusComposer()" aria-label="Escrever publicação">+</button>
     <button class="mobile-nav-item" type="button" (click)="showToast('As notificações vão aparecer aqui.')"><span>♧</span>Alertas</button>
     <a class="mobile-nav-item" routerLink="/profile"><span>☻</span>Perfil</a>
   </nav>

@@ -115,33 +115,7 @@
             @if (memberSince()) {
               <p class="text-xs text-[#74746d]">Na JUST desde {{ memberSince() }}</p>
             }
-            <nav
-              class="mt-5 grid grid-cols-4 border-y border-[#e5e2d9]"
-              aria-label="Conteúdo do perfil"
-            >
-              @for (tab of tabs; track tab) {
-                <button
-                  type="button"
-                  (click)="selectedTab.set(tab)"
-                  [attr.aria-current]="selectedTab() === tab ? 'page' : null"
-                  [class.font-black]="selectedTab() === tab"
-                  [class.border-b-2]="selectedTab() === tab"
-                  class="min-h-12 border-[#111] text-[11px]"
-                >
-                  {{ tab }}
-                </button>
-              }
-            </nav>
-            <div
-              class="grid min-h-52 content-center justify-items-center gap-3 px-4 text-center"
-              aria-live="polite"
-            >
-              <span aria-hidden="true" class="text-4xl">🫥</span>
-              <h2 class="m-0 text-lg font-black">{{ selectedTab() }} ainda não disponíveis.</h2>
-              <p class="m-0 max-w-80 text-xs leading-relaxed text-[#74746d]">
-                O conteúdo deste perfil vai aparecer aqui quando estiver disponível.
-              </p>
-            </div>
+            <app-profile-posts [userId]="person.userId" />
           </div>
         </article>
       }

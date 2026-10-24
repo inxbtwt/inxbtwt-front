@@ -468,80 +468,9 @@
             }
           }
 
-          <nav
-            class="mt-[18px] grid h-[53px] grid-cols-4 border-y border-[#e5e2d9] max-[760px]:mt-[15px] max-[760px]:h-[49px]"
-            aria-label="Conteúdo do perfil"
-          >
-            @for (tab of tabs; track tab) {
-              <button
-                class="relative text-[10px] text-[#74746d] max-[760px]:text-[9px]"
-                type="button"
-                [class]="
-                  selectedTab() === tab
-                    ? 'relative text-[10px] font-extrabold text-[#111] after:absolute after:right-[15px] after:bottom-[-1px] after:left-[15px] after:h-[3px] after:rounded-t after:bg-[#111] max-[760px]:text-[9px]'
-                    : 'relative text-[10px] text-[#74746d] max-[760px]:text-[9px]'
-                "
-                [attr.aria-current]="selectedTab() === tab ? 'page' : null"
-                (click)="selectTab(tab)"
-              >
-                {{ tab }}
-              </button>
-            }
-          </nav>
-
-          <div
-            class="grid min-h-[241px] justify-items-center content-center px-5 pt-[26px] pb-[31px] text-center max-[760px]:min-h-[220px] max-[760px]:px-[10px]"
-            aria-live="polite"
-          >
-            <span
-              class="grid size-[55px] rotate-[-5deg] place-items-center rounded-2xl border border-[#111] bg-[#ccb1ff] text-[28px] shadow-[3px_4px_0_#111]"
-              aria-hidden="true"
-              >🫥</span
-            >
-            @switch (selectedTab()) {
-              @case ('Publicações') {
-                <h2
-                  class="mt-[17px] mb-[5px] font-['Arial_Black',Arial,sans-serif] text-[18px] font-black tracking-[-0.5px] max-[760px]:text-base"
-                >
-                  A timeline está de boas.
-                </h2>
-                <p class="m-0 max-w-[330px] text-[10px] leading-[1.5] text-[#74746d]">
-                  Suas publicações vão aparecer aqui quando você tiver algo para compartilhar. Sem
-                  pressa, sem cobrança do algoritmo.
-                </p>
-              }
-              @case ('Respostas') {
-                <h2
-                  class="mt-[17px] mb-[5px] font-['Arial_Black',Arial,sans-serif] text-[18px] font-black tracking-[-0.5px] max-[760px]:text-base"
-                >
-                  Nenhuma resposta por enquanto.
-                </h2>
-                <p class="m-0 max-w-[330px] text-[10px] leading-[1.5] text-[#74746d]">
-                  As respostas que você publicar aparecem aqui.
-                </p>
-              }
-              @case ('Mídia') {
-                <h2
-                  class="mt-[17px] mb-[5px] font-['Arial_Black',Arial,sans-serif] text-[18px] font-black tracking-[-0.5px] max-[760px]:text-base"
-                >
-                  Sem mídia por enquanto.
-                </h2>
-                <p class="m-0 max-w-[330px] text-[10px] leading-[1.5] text-[#74746d]">
-                  Fotos e vídeos compartilhados por você aparecem aqui.
-                </p>
-              }
-              @case ('Curtidas') {
-                <h2
-                  class="mt-[17px] mb-[5px] font-['Arial_Black',Arial,sans-serif] text-[18px] font-black tracking-[-0.5px] max-[760px]:text-base"
-                >
-                  Seu mural de curtidas está vazio.
-                </h2>
-                <p class="m-0 max-w-[330px] text-[10px] leading-[1.5] text-[#74746d]">
-                  Quando você curtir uma publicação, ela aparece nesta aba.
-                </p>
-              }
-            }
-          </div>
+          @if (currentUser(); as user) {
+            <app-profile-posts [userId]="user.userId" />
+          }
         </div>
       </section>
     </main>

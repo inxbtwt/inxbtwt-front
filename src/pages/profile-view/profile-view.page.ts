@@ -14,13 +14,14 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, combineLatest, finalize, of, startWith, Subject, switchMap } from 'rxjs';
 import { ProfileView } from '../../components/dto/profile/profile-search';
 import { ProfileImage } from '../../components/profile-image/profile-image';
+import { ProfilePosts } from '../../components/profile-posts/profile-posts';
 import { ProfileSearch } from '../../components/profile-search/profile-search';
 import { AuthService } from '../../services/auth.service';
 import { ProfileService } from '../../services/profile.service';
 
 @Component({
   selector: 'app-profile-view-page',
-  imports: [RouterLink, ProfileImage, ProfileSearch],
+  imports: [RouterLink, ProfileImage, ProfileSearch, ProfilePosts],
   templateUrl: './profile-view.page.html',
 })
 export class ProfileViewPage implements OnInit {
@@ -33,8 +34,6 @@ export class ProfileViewPage implements OnInit {
   protected readonly loading = signal(true);
   protected readonly error = signal('');
   protected readonly retry = new Subject<void>();
-  protected readonly tabs = ['Publicações', 'Respostas', 'Mídia', 'Curtidas'];
-  protected readonly selectedTab = signal('Publicações');
   protected readonly photoDialog = viewChild<ElementRef<HTMLDialogElement>>('photoDialog');
   protected readonly viewingCover = signal(false);
   protected readonly imageUrl = computed(() =>
@@ -63,7 +62,6 @@ export class ProfileViewPage implements OnInit {
           this.photoDialog()?.nativeElement.close();
           this.profile.set(null);
           this.error.set('');
-          this.selectedTab.set('Publicações');
           this.loading.set(true);
           if (username.toLowerCase() === this.auth.currentUser()?.username.toLowerCase()) {
             void this.router.navigateByUrl('/profile', { replaceUrl: true });
