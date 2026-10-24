@@ -1,8 +1,8 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { catchError, finalize, map, of } from 'rxjs';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { catchError, finalize, map, of, switchMap, Subscription } from 'rxjs';
 import { ApiResponse } from '../../components/dto/api/api-response';
 import { UserPhotoUrls } from '../../components/dto/auth/user-photo-urls';
 import { AuthService } from '../../services/auth.service';
@@ -12,7 +12,8 @@ import { AuthService } from '../../services/auth.service';
   imports: [FormsModule, RouterLink],
   templateUrl: './profile.page.html',
 })
-export class ProfilePage implements OnInit {
+export class ProfilePage implements OnInit, OnDestroy {
+  private photoRequests = new Subscription();
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
 
@@ -46,32 +47,146 @@ export class ProfilePage implements OnInit {
 
   protected readonly tabs = ['Publicações', 'Respostas', 'Mídia', 'Curtidas'];
   protected name = '';
+  protected username = '';
+  protected photo: File | null = null;
+  protected readonly usernameFeedback = signal('');
+  protected readonly usernameValid = signal(false);
+  protected readonly usernameSuggestions = signal<string[]>([]);
+  private usernameCheck?: Subscription;
+  private suggestionCheck?: Subscription;
+
+  protected usernameChanged(username: string): void {
+    this.username = username;
+    this.usernameValid.set(false);
+    this.usernameFeedback.set('');
+    this.usernameSuggestions.set([]);
+    this.usernameCheck?.unsubscribe();
+    this.suggestionCheck?.unsubscribe();
+  }
+
+  protected chooseUsername(username: string): void {
+    this.usernameChanged(username);
+    this.checkUsername();
+  }
   protected email = '';
   protected phone = '';
 
+  private readonly route = inject(ActivatedRoute);
+
   ngOnInit(): void {
+    if (this.route.snapshot.queryParamMap.get('photoUploadFailed') === 'true') {
+      this.feedback.set(
+        'Conta criada, mas a foto não foi enviada. Edite seu perfil para tentar novamente.',
+      );
+    }
+    this.loadPhotos();
+  }
+
+  private loadPhotos(): void {
     const userId = this.currentUser()?.userId;
 
     if (!userId) {
       return;
     }
 
-    this.http
-      .get<ApiResponse<UserPhotoUrls>>(`/api/users/${userId}/photos`, {
-        withCredentials: true,
-      })
-      .pipe(
-        map((response) => response.data),
-        catchError(() => of(null)),
-      )
-      .subscribe((photos) => {
-        if (!photos) {
-          return;
-        }
+    this.photoRequests.unsubscribe();
+    this.photoRequests = new Subscription();
+    this.photoRequests.add(
+      this.http
+        .get<ApiResponse<UserPhotoUrls>>(`/api/users/${encodeURIComponent(userId)}/photos`, {
+          withCredentials: true,
+        })
+        .pipe(map((response) => response.data))
+        .subscribe({
+          next: (photos) => {
+            this.loadPhoto(userId, photos.profileUrl, this.profilePhoto);
+            this.loadPhoto(userId, photos.coverUrl, this.coverPhoto);
+          },
+          error: () =>
+            this.feedback.set('Não foi possível carregar as fotos do perfil. Tente novamente.'),
+        }),
+    );
+  }
 
-        this.profilePhoto.set(this.photoEndpoint(userId, photos.profileUrl));
-        this.coverPhoto.set(this.photoEndpoint(userId, photos.coverUrl));
-      });
+  private loadPhoto(
+    userId: string,
+    photoUrl: string | null,
+    target: typeof this.profilePhoto,
+  ): void {
+    if (!photoUrl) {
+      this.replacePhoto(target, '');
+      return;
+    }
+
+    this.photoRequests.add(
+      this.http
+        .get(`/api/users/${encodeURIComponent(userId)}/photo`, {
+          params: { url: photoUrl },
+          responseType: 'blob',
+          withCredentials: true,
+        })
+        .subscribe({
+          next: (photo) => this.replacePhoto(target, URL.createObjectURL(photo)),
+          error: () =>
+            this.feedback.set('Não foi possível carregar a imagem do perfil. Tente novamente.'),
+        }),
+    );
+  }
+
+  private replacePhoto(target: typeof this.profilePhoto, url: string): void {
+    if (target()) {
+      URL.revokeObjectURL(target());
+    }
+    target.set(url);
+  }
+
+  ngOnDestroy(): void {
+    this.photoRequests.unsubscribe();
+    this.usernameCheck?.unsubscribe();
+    this.suggestionCheck?.unsubscribe();
+    this.replacePhoto(this.profilePhoto, '');
+    this.replacePhoto(this.coverPhoto, '');
+  }
+
+  protected checkUsername(): void {
+    const username = this.username.trim();
+    this.usernameChanged(this.username);
+    if (username.length < 3 || username.length > 30) {
+      this.usernameFeedback.set('Use entre 3 e 30 caracteres.');
+      return;
+    }
+    if (username.toLowerCase() === this.currentUser()?.username?.toLowerCase()) {
+      this.usernameValid.set(true);
+      return;
+    }
+    this.usernameCheck = this.auth.checkUsername(username).subscribe({
+      next: (available) => {
+        if (this.username.trim() === username) {
+          this.usernameValid.set(available);
+          this.usernameFeedback.set(available ? '' : 'Este username já está em uso.');
+          if (!available) {
+            this.suggestionCheck = this.auth
+              .suggestUsernames(username)
+              .subscribe((suggestions) => this.usernameSuggestions.set(suggestions));
+          }
+        }
+      },
+      error: () => {
+        if (this.username.trim() === username) {
+          this.usernameFeedback.set('Não foi possível consultar o username. Tente novamente.');
+        }
+      },
+    });
+  }
+
+  protected selectPhoto(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.photo = input.files?.[0] ?? null;
+    if (this.photo && !['image/png', 'image/jpeg', 'image/webp'].includes(this.photo.type)) {
+      this.photo = null;
+      input.value = '';
+      this.feedback.set('Selecione uma imagem PNG, JPEG ou WebP.');
+    }
   }
 
   protected getInitials(): string {
@@ -92,6 +207,10 @@ export class ProfilePage implements OnInit {
     }
 
     this.name = user.name;
+    this.usernameChanged(user.username ?? '');
+    this.usernameValid.set(Boolean(user.username));
+    this.photo = null;
+    this.usernameFeedback.set('');
     this.email = user.email;
     this.phone = user.phone;
     this.feedback.set('');
@@ -120,12 +239,29 @@ export class ProfilePage implements OnInit {
     this.auth
       .updateProfile(userId, {
         name: this.name.trim(),
+        username: this.username.trim(),
         email: this.email.trim(),
         phone: this.phone.trim(),
       })
-      .pipe(finalize(() => this.saving.set(false)))
+      .pipe(
+        switchMap(() =>
+          this.photo
+            ? this.auth.uploadProfilePhoto(userId, this.photo).pipe(
+                catchError(() => {
+                  this.feedback.set('Dados salvos, mas a foto não foi enviada. Tente novamente.');
+                  return of(null);
+                }),
+              )
+            : of(null),
+        ),
+        finalize(() => this.saving.set(false)),
+      )
       .subscribe({
         next: () => {
+          this.loadPhotos();
+          if (this.feedback()) {
+            return;
+          }
           this.editing.set(false);
           this.feedback.set('Perfil atualizado. O caos segue organizado.');
         },
@@ -158,13 +294,5 @@ export class ProfilePage implements OnInit {
 
   protected selectTab(tab: string): void {
     this.selectedTab.set(tab);
-  }
-
-  private photoEndpoint(userId: string, photoUrl: string | null): string {
-    if (!photoUrl) {
-      return '';
-    }
-
-    return `/api/users/${encodeURIComponent(userId)}/photo?url=${encodeURIComponent(photoUrl)}`;
   }
 }

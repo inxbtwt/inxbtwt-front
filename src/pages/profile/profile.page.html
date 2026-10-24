@@ -272,6 +272,40 @@
                   [disabled]="saving()"
                 />
 
+                <div class="grid gap-2">
+                  <label for="username-input" class="font-bold">Username</label>
+                  <div class="relative">
+                    <input id="username-input" name="username" type="text" autocomplete="username"
+                      [(ngModel)]="username" (ngModelChange)="usernameChanged($event)" (blur)="checkUsername()"
+                      required minlength="3" maxlength="30" [disabled]="saving()"
+                      class="min-h-10 w-full rounded-md border border-[#979b9f] bg-transparent pl-3 pr-10 py-2" />
+                    @if (usernameValid()) {
+                      <span role="img" aria-label="Username válido" title="Válido"
+                        class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-green-700">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" class="size-5 fill-none stroke-current [stroke-width:2.5] [stroke-linecap:round] [stroke-linejoin:round]">
+                          <path d="m5 12 4 4L19 6" />
+                        </svg>
+                      </span>
+                    }
+                  </div>
+                  @if (usernameFeedback()) {
+                    <p class="m-0 text-xs" role="status">{{ usernameFeedback() }}</p>
+                  }
+                  @if (usernameSuggestions().length) {
+                    <div class="flex flex-wrap gap-2" aria-label="Sugestões de username" aria-live="polite">
+                      @for (suggestion of usernameSuggestions(); track suggestion) {
+                        <button type="button" (click)="chooseUsername(suggestion)" [disabled]="saving()"
+                          class="max-w-full break-all rounded-full border border-[#111] bg-[#ccb1ff] px-3 py-2 text-xs font-bold hover:bg-[#d4ff3f] focus-visible:outline-2 focus-visible:outline-offset-2">
+                          @{{ suggestion }}
+                        </button>
+                      }
+                    </div>
+                  }
+                  <label for="profile-photo-input" class="font-bold">Foto de perfil (opcional)</label>
+                  <input id="profile-photo-input" name="photo" type="file" accept="image/png,image/jpeg,image/webp"
+                    (change)="selectPhoto($event)" [disabled]="saving()" class="w-full text-sm" />
+                </div>
+
                 <label class="mt-[5px] text-[10px] font-extrabold" for="profile-email-input"
                   >E-mail</label
                 >
@@ -375,7 +409,7 @@
               {{ currentUser()?.name }}
             </h1>
             <p class="mt-0 mb-0 [overflow-wrap:anywhere] text-[11px] text-[#74746d]">
-              {{ currentUser()?.email }}
+              {{ currentUser()?.username ? '@' + currentUser()?.username : currentUser()?.email }}
             </p>
             <p
               class="mt-[15px] mb-[13px] max-w-[460px] text-[12px] leading-[1.55] max-[760px]:mt-3 max-[760px]:text-[11px]"
@@ -535,7 +569,7 @@
               }}</strong>
               <span
                 class="overflow-hidden text-[8px] text-ellipsis whitespace-nowrap text-[#74746d]"
-                >{{ currentUser()?.email }}</span
+                >{{ currentUser()?.username ? '@' + currentUser()?.username : currentUser()?.email }}</span
               >
             </div>
           </div>

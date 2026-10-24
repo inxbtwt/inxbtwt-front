@@ -50,7 +50,7 @@
       <button
         type="button"
         (click)="toggleMode()"
-        [disabled]="submitting()"
+        [disabled]="submitting() || advancing()"
         class="relative mr-[10px] cursor-pointer border-0 bg-transparent p-0
                text-sm font-bold text-inherit
                underline decoration-[#d4ff3f] decoration-4 underline-offset-[7px]
@@ -220,11 +220,25 @@
 
         <form
           #loginForm="ngForm"
-          (ngSubmit)="login()"
+          (ngSubmit)="submitStep(loginForm)"
           [attr.aria-busy]="submitting()"
           class="grid gap-[23px]"
         >
           @if (creatingAccount()) {
+            <ol class="m-0 grid grid-cols-4 gap-2 p-0 list-none" aria-label="Etapas do cadastro">
+              @for (label of steps; track $index) {
+                <li [attr.aria-current]="step() === $index ? 'step' : null"
+                  class="grid gap-2 text-center text-xs"
+                  [class.font-bold]="step() === $index">
+                  <span class="rounded-full border border-[#111] py-2"
+                    [class.bg-[#d4ff3f]]="step() >= $index">{{ $index + 1 }}</span>
+                  {{ label }}
+                </li>
+              }
+            </ol>
+            <p class="m-0 text-sm font-bold" aria-live="polite">Etapa {{ step() + 1 }} de 4: {{ steps[step()] }}</p>
+          }
+          @if (creatingAccount() && step() === 0) {
             <!-- NAME -->
             <div class="grid gap-[10px]">
               <label
@@ -269,130 +283,257 @@
                 Telefone
               </label>
 
-              <input
-                id="phone"
-                name="phone"
-                type="tel"
-                autocomplete="tel"
-                placeholder="DDD + número"
-                [(ngModel)]="phone"
-                required
-                maxlength="255"
-                [disabled]="submitting()"
-                class="block min-h-[55px] w-full min-w-0
-                       rounded-[9px]
-                       border-[1.5px] border-[#979b9f]
-                       bg-transparent
-                       px-4 py-[14px]
-                       text-base text-[#111]
-                       placeholder:text-[#92969b]
-                       focus:border-[#111]
-                       focus:outline-3
-                       focus:outline-offset-2
-                       focus:outline-[#d4ff3f]
-                       disabled:opacity-65"
-              />
+              <div class="relative">
+                <input
+                  id="phone"
+                  #phoneControl="ngModel"
+                  [attr.aria-invalid]="creatingAccount() && availability()['phone'] === 'used'"
+                  aria-describedby="phone-availability"
+                  name="phone"
+                  type="tel"
+                  autocomplete="tel"
+                  placeholder="DDD + número"
+                  [(ngModel)]="phone"
+                  (ngModelChange)="creatingAccount() && checkAvailability('phone', $event)"
+                  required
+                  maxlength="255"
+                  [disabled]="submitting()"
+                  class="block min-h-[55px] w-full min-w-0
+                         rounded-[9px]
+                         border-[1.5px] border-[#979b9f]
+                         bg-transparent
+                         pl-4 pr-12 py-[14px]
+                         text-base text-[#111]
+                         placeholder:text-[#92969b]
+                         focus:border-[#111]
+                         focus:outline-3
+                         focus:outline-offset-2
+                         focus:outline-[#d4ff3f]
+                         disabled:opacity-65"
+                />
+                @if (creatingAccount() && availability()['phone'] === 'available' && phoneControl.valid) {
+                  <span role="img" aria-label="Telefone válido"
+                    title="Válido" class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-green-700">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" class="size-5 fill-none stroke-current [stroke-width:2.5] [stroke-linecap:round] [stroke-linejoin:round]">
+                      <path d="m5 12 4 4L19 6" />
+                    </svg>
+                  </span>
+                }
+              </div>
+              @if (creatingAccount() && availabilityMessage('phone')) {
+                <p id="phone-availability" class="m-0 text-sm" role="status"
+                  [class.text-red-700]="availability()['phone'] === 'used' || availability()['phone'] === 'error'">{{ availabilityMessage('phone') }}</p>
+              }
             </div>
           }
 
-          <!-- EMAIL -->
-          <div class="grid gap-[10px]">
-            <label
-              for="email"
-              class="text-base font-bold"
-            >
-              E-mail
-            </label>
-
-            <input
-              id="email"
-              name="email"
-              type="email"
-              [autocomplete]="creatingAccount() ? 'email' : 'username'"
-              placeholder="seu@email.com"
-              [(ngModel)]="email"
-              required
-              email
-              [disabled]="submitting()"
-              class="block min-h-[55px] w-full min-w-0
-                     rounded-[9px]
-                     border-[1.5px] border-[#979b9f]
-                     bg-transparent
-                     px-4 py-[14px]
-                     text-base text-[#111]
-                     placeholder:text-[#92969b]
-                     focus:border-[#111]
-                     focus:outline-3
-                     focus:outline-offset-2
-                     focus:outline-[#d4ff3f]
-                     disabled:opacity-65"
-            />
-          </div>
-
-          <!-- PASSWORD -->
-          <div class="grid gap-[10px]">
-            <label
-              for="password"
-              class="text-base font-bold"
-            >
-              Senha
-            </label>
-
-            <div class="relative">
-              <input
-                id="password"
-                name="password"
-                [type]="passwordVisible() ? 'text' : 'password'"
-                [autocomplete]="creatingAccount() ? 'new-password' : 'current-password'"
-                [placeholder]="creatingAccount() ? 'Pelo menos 8 caracteres' : 'Sua senha'"
-                [(ngModel)]="password"
-                required
-                [minlength]="creatingAccount() ? 8 : 1"
-                [disabled]="submitting()"
-                class="block min-h-[55px] w-full min-w-0
-                       rounded-[9px]
-                       border-[1.5px] border-[#979b9f]
-                       bg-transparent
-                       py-[14px] pr-14 pl-4
-                       text-base text-[#111]
-                       placeholder:text-[#92969b]
-                       focus:border-[#111]
-                       focus:outline-3
-                       focus:outline-offset-2
-                       focus:outline-[#d4ff3f]
-                       disabled:opacity-65"
-              />
-
-              <button
-                type="button"
-                (click)="passwordVisible.set(!passwordVisible())"
-                [attr.aria-label]="passwordVisible() ? 'Ocultar senha' : 'Mostrar senha'"
-                [attr.aria-pressed]="passwordVisible()"
-                aria-controls="password"
-                class="absolute top-[5px] right-[5px]
-                       grid h-11 w-11 cursor-pointer place-items-center
-                       rounded-md border-0 bg-transparent
-                       focus-visible:outline-3
-                       focus-visible:outline-offset-5
-                       focus-visible:outline-[#111]"
+          @if (!creatingAccount() || step() === 0) {
+            <!-- EMAIL -->
+            <div class="grid gap-[10px]">
+              <label
+                for="email"
+                class="text-base font-bold"
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden="true"
-                  class="h-[25px] w-[25px]
-                         stroke-current stroke-[1.6]"
-                >
-                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
-                  <circle cx="12" cy="12" r="3" />
+                E-mail
+              </label>
 
-                  @if (passwordVisible()) {
-                    <path d="m4 3 16 18" />
-                  }
-                </svg>
-              </button>
+              <div class="relative">
+                <input
+                  id="email"
+                  #emailControl="ngModel"
+                  [attr.aria-invalid]="creatingAccount() && availability()['email'] === 'used'"
+                  aria-describedby="email-availability"
+                  name="email"
+                  type="email"
+                  [autocomplete]="creatingAccount() ? 'email' : 'username'"
+                  placeholder="seu@email.com"
+                  [(ngModel)]="email"
+                  (ngModelChange)="creatingAccount() && checkAvailability('email', $event)"
+                  required
+                  email
+                  [disabled]="submitting()"
+                  class="block min-h-[55px] w-full min-w-0
+                         rounded-[9px]
+                         border-[1.5px] border-[#979b9f]
+                         bg-transparent
+                         pl-4 pr-12 py-[14px]
+                         text-base text-[#111]
+                         placeholder:text-[#92969b]
+                         focus:border-[#111]
+                         focus:outline-3
+                         focus:outline-offset-2
+                         focus:outline-[#d4ff3f]
+                         disabled:opacity-65"
+                />
+                @if (creatingAccount() && availability()['email'] === 'available' && emailControl.valid) {
+                  <span role="img" aria-label="E-mail válido"
+                    title="Válido" class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-green-700">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" class="size-5 fill-none stroke-current [stroke-width:2.5] [stroke-linecap:round] [stroke-linejoin:round]">
+                      <path d="m5 12 4 4L19 6" />
+                    </svg>
+                  </span>
+                }
+              </div>
+              @if (creatingAccount() && availabilityMessage('email')) {
+                <p id="email-availability" class="m-0 text-sm" role="status"
+                  [class.text-red-700]="availability()['email'] === 'used' || availability()['email'] === 'error'">{{ availabilityMessage('email') }}</p>
+              }
             </div>
-          </div>
+
+            <!-- PASSWORD -->
+            <div class="grid gap-[10px]">
+              <label
+                for="password"
+                class="text-base font-bold"
+              >
+                Senha
+              </label>
+
+              <div class="relative">
+                <input
+                  id="password"
+                  name="password"
+                  [type]="passwordVisible() ? 'text' : 'password'"
+                  [autocomplete]="creatingAccount() ? 'new-password' : 'current-password'"
+                  [placeholder]="creatingAccount() ? 'Pelo menos 8 caracteres' : 'Sua senha'"
+                  [(ngModel)]="password"
+                  required
+                  [minlength]="creatingAccount() ? 8 : 1"
+                  [disabled]="submitting()"
+                  class="block min-h-[55px] w-full min-w-0
+                         rounded-[9px]
+                         border-[1.5px] border-[#979b9f]
+                         bg-transparent
+                         py-[14px] pr-14 pl-4
+                         text-base text-[#111]
+                         placeholder:text-[#92969b]
+                         focus:border-[#111]
+                         focus:outline-3
+                         focus:outline-offset-2
+                         focus:outline-[#d4ff3f]
+                         disabled:opacity-65"
+                />
+
+                <button
+                  type="button"
+                  (click)="passwordVisible.set(!passwordVisible())"
+                  [attr.aria-label]="passwordVisible() ? 'Ocultar senha' : 'Mostrar senha'"
+                  [attr.aria-pressed]="passwordVisible()"
+                  aria-controls="password"
+                  class="absolute top-[5px] right-[5px]
+                         grid h-11 w-11 cursor-pointer place-items-center
+                         rounded-md border-0 bg-transparent
+                         focus-visible:outline-3
+                         focus-visible:outline-offset-5
+                         focus-visible:outline-[#111]"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden="true"
+                    class="h-[25px] w-[25px]
+                           stroke-current stroke-[1.6]"
+                  >
+                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                    <circle cx="12" cy="12" r="3" />
+
+                    @if (passwordVisible()) {
+                      <path d="m4 3 16 18" />
+                    }
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+          }
+
+          @if (creatingAccount() && step() === 1) {
+            <div class="grid gap-[10px]">
+              <label for="username-input" class="text-base font-bold">Seu username</label>
+              <div class="relative">
+                <input id="username-input"
+                  #usernameControl="ngModel"
+                  [attr.aria-invalid]="creatingAccount() && availability()['username'] === 'used'"
+                  aria-describedby="username-availability" name="username" type="text" autocomplete="username"
+                  [(ngModel)]="username" (ngModelChange)="checkAvailability('username', $event)" required minlength="3" maxlength="30"
+                  [disabled]="submitting() || advancing()"
+                  placeholder="Como você quer ser encontrado?"
+                  class="min-h-[55px] w-full rounded-[9px] border border-[#979b9f] bg-transparent pl-4 pr-12 py-3 focus:outline-[#d4ff3f]" />
+                @if (creatingAccount() && availability()['username'] === 'available' && usernameControl.valid) {
+                  <span role="img" aria-label="Username válido"
+                    title="Válido" class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-green-700">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" class="size-5 fill-none stroke-current [stroke-width:2.5] [stroke-linecap:round] [stroke-linejoin:round]">
+                      <path d="m5 12 4 4L19 6" />
+                    </svg>
+                  </span>
+                }
+              </div>
+              <p id="username-availability" class="m-0 text-sm" role="status"
+                  [class.text-red-700]="availability()['username'] === 'used' || availability()['username'] === 'error'">{{ availabilityMessage('username') }}</p>
+              @if (suggestingUsernames()) {
+                <p class="m-0 text-sm text-[#74746d]" role="status">Buscando sugestões…</p>
+              }
+              @if (usernameSuggestions().length) {
+                <div class="grid gap-2" aria-label="Sugestões de username" aria-live="polite">
+                  <p class="m-0 text-sm">Que tal uma destas opções?</p>
+                  <div class="flex flex-wrap gap-2">
+                    @for (suggestion of usernameSuggestions(); track suggestion) {
+                      <button type="button" (click)="chooseUsername(suggestion)" [disabled]="submitting()"
+                        class="max-w-full break-all rounded-full border border-[#111] bg-[#ccb1ff] px-3 py-2 text-sm font-bold hover:bg-[#d4ff3f] focus-visible:outline-2 focus-visible:outline-offset-2">
+                        @{{ suggestion }}
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          @if (creatingAccount() && step() === 2) {
+            <div class="grid justify-items-start gap-4">
+              <label for="profile-photo-input" class="text-base font-bold">Sua foto de perfil</label>
+              @if (photoPreview()) {
+                <img [src]="photoPreview()" alt="Prévia da foto de perfil"
+                  class="size-28 rounded-full border-2 border-[#111] object-cover" />
+              }
+              <input id="profile-photo-input" name="photo" type="file"
+                accept="image/png,image/jpeg,image/webp" (change)="selectPhoto($event)"
+                [disabled]="submitting()" class="w-full text-sm" />
+              <p class="m-0 text-sm text-[#74746d]">Opcional. Escolha uma imagem PNG, JPEG ou WebP.</p>
+              @if (photo) {
+                <button type="button" (click)="removePhoto()" class="text-sm underline">Remover foto</button>
+              }
+            </div>
+          }
+
+          @if (creatingAccount() && step() === 3) {
+            <div class="grid gap-4 rounded-[9px] border border-[#dad8d0] p-4">
+              <h3 class="m-0 text-lg font-bold">Confira seus dados</h3>
+              @if (photoPreview()) {
+                <img [src]="photoPreview()" alt="Foto escolhida para o perfil"
+                  class="size-24 rounded-full border-2 border-[#111] object-cover" />
+              }
+              <dl class="m-0 grid gap-3 text-sm">
+                <div><dt class="font-bold">Nome</dt><dd class="m-0 break-words">{{ name }}</dd></div>
+                <div><dt class="font-bold">E-mail</dt><dd class="m-0 break-all">{{ email }}</dd></div>
+                <div><dt class="font-bold">Telefone</dt><dd class="m-0">{{ phone }}</dd></div>
+                <div><dt class="font-bold">Username</dt><dd class="m-0 break-all">@{{ username }}</dd></div>
+                <div><dt class="font-bold">Senha</dt><dd class="m-0">••••••••</dd></div>
+                <div><dt class="font-bold">Foto</dt><dd class="m-0 break-all">{{ photo?.name || 'Sem foto de perfil' }}</dd></div>
+              </dl>
+              <p class="m-0 text-sm text-[#74746d]">Use Voltar para ajustar os dados antes de criar sua conta.</p>
+            </div>
+          }
+
+          @if (creatingAccount()) {
+            @for (field of uniqueFields; track field) {
+              @if (availability()[field] === 'error') {
+                <button type="button" (click)="retryAvailability(field)" class="text-sm underline">
+                  Verificar {{ field }} novamente
+                </button>
+              }
+            }
+          }
 
           <!-- ERROR -->
           @if (error() || auth.error()) {
@@ -409,10 +550,16 @@
             </p>
           }
 
+          @if (creatingAccount() && step() > 0) {
+            <button type="button" (click)="previousStep()" [disabled]="submitting() || advancing()"
+              class="min-h-11 rounded-[9px] border border-[#111] px-4 py-2 font-bold disabled:opacity-60">
+              Voltar
+            </button>
+          }
           <!-- SUBMIT -->
           <button
             type="submit"
-            [disabled]="loginForm.invalid || submitting()"
+            [disabled]="loginForm.invalid || submitting() || advancing() || availabilityBlocked()"
             class="mr-[3px] mb-[5px]
                    flex min-h-[59px] cursor-pointer
                    items-center justify-center gap-6
@@ -437,10 +584,10 @@
           >
             <span>
               {{
-                submitting()
+                submitting() || advancing()
                   ? 'Só um instante…'
                   : creatingAccount()
-                    ? 'Bora fazer parte'
+                    ? step() === 3 ? 'Confirmar e criar conta' : step() === 2 && !photo ? 'Continuar sem foto' : 'Continuar'
                     : 'Bora entrar'
               }}
             </span>

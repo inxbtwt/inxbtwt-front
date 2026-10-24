@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
-import { catchError, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
+import { catchError, forkJoin, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { ApiResponse } from '../components/dto/api/api-response';
 import { AuthUser } from '../components/dto/auth/auth-user';
 import { CsrfToken } from '../components/dto/auth/csrf-token';
@@ -64,14 +64,20 @@ export class AuthService {
     );
   }
 
-  register(name: string, email: string, phone: string, password: string): Observable<AuthUser> {
+  register(
+    name: string,
+    username: string,
+    email: string,
+    phone: string,
+    password: string,
+  ): Observable<AuthUser> {
     this.sessionError.set('');
 
     return this.csrf().pipe(
       switchMap((csrf) =>
         this.http.post(
           '/api/users',
-          { name, email, phone, password },
+          { name, username, email, phone, password },
           {
             headers: { [csrf.headerName]: csrf.token },
             withCredentials: true,
@@ -97,7 +103,7 @@ export class AuthService {
 
   updateProfile(
     userId: string,
-    profile: Pick<AuthUser, 'name' | 'email' | 'phone'>,
+    profile: Pick<AuthUser, 'name' | 'username' | 'email' | 'phone'>,
   ): Observable<AuthUser> {
     return this.csrf().pipe(
       switchMap((csrf) =>
@@ -108,6 +114,63 @@ export class AuthService {
       ),
       map((response) => response.data),
       tap((user) => this.user.set(user)),
+    );
+  }
+
+  checkUsername(username: string): Observable<boolean> {
+    return this.checkAvailability('username', username);
+  }
+
+  checkAvailability(field: 'email' | 'phone' | 'username', value: string): Observable<boolean> {
+    return this.http
+      .get<ApiResponse<{ available: boolean }>>('/api/users/availability', {
+        params: { field, value },
+        withCredentials: true,
+      })
+      .pipe(map((response) => response.data.available));
+  }
+
+  suggestUsernames(username: string): Observable<string[]> {
+    const base = username.trim();
+    const suffixes = [
+      '_1',
+      '_2',
+      '_3',
+      '_oficial',
+      '_real',
+      `_${Math.floor(1000 + Math.random() * 9000)}`,
+    ];
+    const candidates = [
+      ...new Set(suffixes.map((suffix) => base.slice(0, 30 - suffix.length) + suffix)),
+    ];
+
+    return forkJoin(
+      candidates.map((candidate) =>
+        this.checkUsername(candidate).pipe(
+          map((available) => (available ? candidate : null)),
+          catchError(() => of(null)),
+        ),
+      ),
+    ).pipe(map((names) => names.filter((name): name is string => name !== null).slice(0, 3)));
+  }
+
+  uploadProfilePhoto(userId: string, photo: File): Observable<{ url: string }> {
+    const body = new FormData();
+    body.append('photo', photo);
+
+    return this.csrf().pipe(
+      switchMap((csrf) =>
+        this.http.post<ApiResponse<{ url: string }>>(
+          `/api/users/${encodeURIComponent(userId)}/photo`,
+          body,
+          {
+            params: { type: 'PROFILE' },
+            headers: { [csrf.headerName]: csrf.token },
+            withCredentials: true,
+          },
+        ),
+      ),
+      map((response) => response.data),
     );
   }
 
