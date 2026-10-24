@@ -1,3 +1,13 @@
+export interface PostMedia {
+  provider: 'UPLOAD' | 'TENOR';
+  externalId: string | null;
+  mediaId: string;
+  url: string;
+  contentType: string;
+  size: number;
+  position: number;
+}
+
 export interface PostAuthor {
   userId: string;
   name: string;
@@ -11,6 +21,7 @@ export interface Post {
   author: PostAuthor;
   createdAt: string;
   updatedAt: string;
+  media: PostMedia[];
   likeCount: number;
   repostCount: number;
   commentCount: number;
@@ -34,4 +45,9 @@ export type PostProfileTab = 'PUBLICATIONS' | 'REPLIES' | 'LIKES';
 export interface CommentCreated {
   comment: Post;
   post: Post;
+}
+
+export interface PostDeleted {
+  postId: string;
+  parent: Post | null;
 }

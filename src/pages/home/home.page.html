@@ -5,16 +5,7 @@
     <app-profile-search />
 
     <div class="topbar-actions">
-      <button
-        class="icon-button notification-button"
-        type="button"
-        aria-label="Notificações"
-        (click)="showToast('As notificações vão aparecer aqui.')"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"></path>
-        </svg>
-      </button>
+      <app-notification-bell />
       <a class="profile-chip" routerLink="/profile" aria-label="Abrir seu perfil">
         <span class="avatar avatar-lime">
           @if (profilePhoto()) {
@@ -45,10 +36,10 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z"></path></svg>
           <span>Salvos</span>
         </button>
-        <button class="nav-item" type="button" (click)="showToast('Sua lista de amigos vai aparecer aqui.')">
+        <a class="nav-item" routerLink="/friends">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM20 8v6M23 11h-6"></path></svg>
           <span>Amigos</span>
-        </button>
+        </a>
         <a class="nav-item" routerLink="/profile">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>
           <span>Meu perfil</span>
@@ -83,32 +74,78 @@
         <span class="banner-star star-two" aria-hidden="true">✦</span>
       </section>
 
-      <section class="post-composer card" aria-labelledby="composer-title">
-        <div class="composer-heading">
-          <span class="avatar composer-avatar">
-            @if (profilePhoto()) {
-              <img [src]="profilePhoto()" [alt]="auth.currentUser()?.name" (error)="clearPhoto()" />
-            } @else {
-              {{ initials }}
-            }
-          </span>
-          <div><h2 id="composer-title">O que tá rolando?</h2><p>Seu cantinho para compartilhar.</p></div>
-        </div>
-        <form (ngSubmit)="publish()" [attr.aria-busy]="publishing()">
-          <label class="sr-only" for="new-post-input">Escreva sua publicação</label>
-          <textarea #postInput id="new-post-input" name="content" [(ngModel)]="draft"
-            (ngModelChange)="publishError.set(''); publishSuccess.set('')"
-            placeholder="Uma ideia, uma história, um pouco de caos…" rows="4"
-            required [disabled]="publishing()"></textarea>
-          @if (publishError()) { <p class="publication-error" role="alert">{{ publishError() }}</p> }
-          @if (publishSuccess()) { <p class="publication-success" role="status">{{ publishSuccess() }}</p> }
-          <div class="composer-footer">
-            <span>Uma publicação pode começar uma conversa.</span>
-            <button type="submit" class="publish-button" [disabled]="!draft.trim() || publishing()">
-              {{ publishing() ? 'Publicando…' : 'Publicar' }} <span aria-hidden="true">↗</span>
-            </button>
+      <section class="post-composer card" aria-label="Criar publicação">
+        @if (!composerOpen()) {
+          <button #composerButton type="button" class="open-composer" (click)="focusComposer()" aria-expanded="false">
+            Fazer uma publicação <span aria-hidden="true">＋</span>
+          </button>
+        } @else {
+          <div id="post-composer-form">
+            <div class="composer-topline">
+              <div class="composer-heading">
+                <span class="avatar composer-avatar">
+                  @if (profilePhoto()) {
+                    <img [src]="profilePhoto()" [alt]="auth.currentUser()?.name" (error)="clearPhoto()" />
+                  } @else {
+                    {{ initials }}
+                  }
+                </span>
+                <div><h2 id="composer-title">O que tá rolando?</h2><p>Seu cantinho para compartilhar.</p></div>
           </div>
-        </form>
+              <button type="button" class="close-composer" (click)="closeComposer()" [disabled]="publishing()" aria-label="Fechar formulário de publicação">×</button>
+          </div>
+            <form (ngSubmit)="publish()" [attr.aria-busy]="publishing()">
+              <label class="sr-only" for="new-post-input">Escreva sua publicação</label>
+              <textarea #postInput id="new-post-input" name="content" [(ngModel)]="draft"
+                (ngModelChange)="publishError.set(''); publishSuccess.set('')"
+                placeholder="Uma ideia, uma história, um pouco de caos…" rows="4"
+                [disabled]="publishing()"></textarea>
+              <div class="media-picker">
+                <input #imagePicker type="file" accept="image/png,image/jpeg" multiple hidden (change)="selectMedia($event)" [disabled]="publishing()" />
+                <input #gifPicker type="file" accept="image/gif" hidden (change)="selectMedia($event)" [disabled]="publishing()" />
+                <button type="button" (click)="imagePicker.click()" [disabled]="publishing() || !!tenorInput().trim() || attachments().length >= 4 || attachments()[0]?.file?.type === 'image/gif'">＋ Imagens</button>
+                <button type="button" (click)="gifOptionsOpen.update(invertGifOptions)" [attr.aria-expanded]="gifOptionsOpen()" [disabled]="publishing() || !!attachments().length">GIF</button>
+                <span>Até 4 imagens ou 1 GIF · 10 MB por arquivo</span>
+              </div>
+              @if (gifOptionsOpen()) {
+                <section class="tenor-picker" aria-label="Selecionar GIF">
+                  <button type="button" (click)="gifPicker.click()" [disabled]="publishing() || !!tenorInput().trim()">Enviar arquivo .gif</button>
+                  <label for="tenor-input">Ou cole o código de incorporação ou link do Tenor</label>
+                  <textarea id="tenor-input" name="tenor" rows="3" maxlength="5000" [ngModel]="tenorInput()" (ngModelChange)="tenorInput.set($event); mediaError.set('')" [disabled]="publishing() || !!attachments().length" placeholder="Cole aqui o HTML copiado do Tenor"></textarea>
+                  @if (tenorInput().trim() && !tenorId()) {
+                    <p class="publication-error" role="alert">Cole um código de incorporação ou link válido do Tenor.</p>
+                  }
+                </section>
+              }
+              @if (tenorId(); as id) {
+                <div class="tenor-preview">
+                  <app-tenor-gif [tenorId]="id" />
+                  <button type="button" (click)="tenorInput.set('')" [disabled]="publishing()">Remover GIF do Tenor</button>
+                </div>
+              }
+              @if (mediaError()) { <p class="publication-error" role="alert">{{ mediaError() }}</p> }
+              @if (attachments().length) {
+                <div class="media-previews">
+                  @for (attachment of attachments(); track attachment.url; let index = $index) {
+                    <figure>
+                      <img [src]="attachment.url" [alt]="attachment.file.name" />
+                      <figcaption>{{ attachment.file.name }}</figcaption>
+                      <button type="button" (click)="removeMedia(index)" [disabled]="publishing()" [attr.aria-label]="'Remover ' + attachment.file.name">×</button>
+                    </figure>
+                  }
+                </div>
+              }
+              @if (publishError()) { <p class="publication-error" role="alert">{{ publishError() }}</p> }
+              <div class="composer-footer">
+                <span>Uma publicação pode começar uma conversa.</span>
+                <button type="submit" class="publish-button" [disabled]="(!draft.trim() && !attachments().length && !tenorId()) || (!!tenorInput().trim() && !tenorId()) || publishing()">
+                  {{ publishing() ? 'Publicando…' : 'Publicar' }} <span aria-hidden="true">↗</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        }
+        @if (publishSuccess()) { <p class="publication-success" role="status">{{ publishSuccess() }}</p> }
       </section>
 
       <div class="feed-toolbar">
@@ -186,9 +223,9 @@
 
   <nav class="mobile-nav" aria-label="Navegação mobile">
     <a class="mobile-nav-item selected" routerLink="/feed"><span>⌂</span>Feed</a>
-    <button class="mobile-nav-item" type="button" (click)="showToast('A aba de explorar vem aí!')"><span>⌕</span>Explorar</button>
+    <a class="mobile-nav-item" routerLink="/friends"><span>♙</span>Amigos</a>
     <button class="mobile-create" type="button" (click)="focusComposer()" aria-label="Escrever publicação">+</button>
-    <button class="mobile-nav-item" type="button" (click)="showToast('As notificações vão aparecer aqui.')"><span>♧</span>Alertas</button>
+    <a class="mobile-nav-item" routerLink="/notifications"><span>♧</span>Alertas</a>
     <a class="mobile-nav-item" routerLink="/profile"><span>☻</span>Perfil</a>
   </nav>
 

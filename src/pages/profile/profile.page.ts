@@ -1,3 +1,4 @@
+import { NotificationBell } from '../../components/notification-bell/notification-bell';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
@@ -21,7 +22,7 @@ import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-profile-page',
-  imports: [FormsModule, RouterLink, ProfileSearch, ProfilePosts],
+  imports: [NotificationBell, FormsModule, RouterLink, ProfileSearch, ProfilePosts],
   templateUrl: './profile.page.html',
 })
 export class ProfilePage implements OnInit, OnDestroy {

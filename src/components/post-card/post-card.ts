@@ -15,13 +15,14 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { finalize, Subscription } from 'rxjs';
 import { Post } from '../dto/post/post';
+import { PostMedia } from '../post-media/post-media';
 import { ProfileImage } from '../profile-image/profile-image';
 import { AuthService } from '../../services/auth.service';
 import { PostService } from '../../services/post.service';
 
 @Component({
   selector: 'app-post-card',
-  imports: [DatePipe, FormsModule, RouterLink, ProfileImage],
+  imports: [DatePipe, FormsModule, RouterLink, ProfileImage, PostMedia],
   templateUrl: './post-card.html',
   styleUrl: './post-card.scss',
 })
@@ -45,6 +46,11 @@ export class PostCard {
   protected readonly commentError = signal('');
   protected readonly commentSuccess = signal('');
   protected commentDraft = '';
+  protected editDraft = '';
+  protected readonly menuOpen = signal(false);
+  protected readonly editing = signal(false);
+  protected readonly confirmingDelete = signal(false);
+
   private commentsPage = -1;
   private commentsRequest?: Subscription;
 
@@ -65,13 +71,92 @@ export class PostCard {
           repostedBy: displayed.repostedBy,
           activityAt: displayed.activityAt,
         });
+      } else if (displayed.parent?.postId === post.postId) {
+        this.patched.set({
+          ...displayed,
+          parent: { ...displayed.parent, content: post.content },
+        });
+      }
+      this.comments.update((comments) =>
+        comments.map((comment) => (comment.postId === post.postId ? post : comment)),
+      );
+    });
+    this.publications.removals.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ postId }) => {
+      this.comments.update((comments) => comments.filter((comment) => comment.postId !== postId));
+      const displayed = this.current();
+      if (displayed.parent?.postId === postId) {
+        this.patched.set({
+          ...displayed,
+          parent: { ...displayed.parent, content: 'Publicação removida.' },
+        });
       }
     });
     this.destroyRef.onDestroy(() => this.commentsRequest?.unsubscribe());
   }
 
-  protected like(): void {
+  protected startEdit(): void {
     if (this.busy() || this.commenting()) return;
+    this.editDraft = this.current().content;
+    this.editing.set(true);
+    this.confirmingDelete.set(false);
+    this.menuOpen.set(false);
+    this.actionError.set('');
+  }
+
+  protected requestDelete(): void {
+    if (this.busy() || this.commenting()) return;
+    this.confirmingDelete.set(true);
+    this.editing.set(false);
+    this.menuOpen.set(false);
+    this.actionError.set('');
+  }
+
+  protected saveEdit(): void {
+    const post = this.current();
+    const content = this.editDraft.trim();
+    if (this.busy() || this.commenting() || (!content && !post.media?.length)) return;
+    if (content === post.content) {
+      this.editing.set(false);
+      return;
+    }
+    this.busy.set(true);
+    this.actionError.set('');
+    this.publications
+      .updatePost(post.postId, content)
+      .pipe(
+        finalize(() => this.busy.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => this.editing.set(false),
+        error: (error: HttpErrorResponse) =>
+          this.actionError.set(
+            error.error?.message || 'Não foi possível editar a publicação. Seu texto foi mantido.',
+          ),
+      });
+  }
+
+  protected deletePost(): void {
+    if (this.busy() || this.commenting() || !this.confirmingDelete()) return;
+    this.busy.set(true);
+    this.actionError.set('');
+    this.publications
+      .deletePost(this.current().postId)
+      .pipe(
+        finalize(() => this.busy.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => this.confirmingDelete.set(false),
+        error: (error: HttpErrorResponse) =>
+          this.actionError.set(
+            error.error?.message || 'Não foi possível excluir a publicação. Tente novamente.',
+          ),
+      });
+  }
+
+  protected like(): void {
+    if (this.busy() || this.commenting() || this.editing() || this.confirmingDelete()) return;
     this.busy.set(true);
     this.actionError.set('');
     const post = this.current();
@@ -87,7 +172,7 @@ export class PostCard {
   }
 
   protected repost(): void {
-    if (this.busy() || this.commenting()) return;
+    if (this.busy() || this.commenting() || this.editing() || this.confirmingDelete()) return;
     this.busy.set(true);
     this.actionError.set('');
     const post = this.current();
@@ -103,7 +188,7 @@ export class PostCard {
   }
 
   protected openPost(event?: Event): void {
-    if (this.detail()) return;
+    if (this.detail() || this.editing() || this.confirmingDelete()) return;
     const target = event?.target;
     if (target instanceof Element && target.closest('a, button, input, textarea, form, .comments'))
       return;
@@ -126,6 +211,7 @@ export class PostCard {
     if (!reset && (this.commentsLoading() || !this.moreComments())) return;
     this.commentsRequest?.unsubscribe();
     const page = reset ? 0 : this.commentsPage + 1;
+    const previousIds = new Set(this.comments().map((comment) => comment.postId));
     this.commentsLoading.set(true);
     this.commentsError.set('');
     this.commentsRequest = this.publications
@@ -133,8 +219,16 @@ export class PostCard {
       .pipe(finalize(() => this.commentsLoading.set(false)))
       .subscribe({
         next: (result) => {
-          if (reset) this.comments.set(result.content);
-          else {
+          if (reset) {
+            const addedDuringRequest = this.comments().filter(
+              (comment) => !previousIds.has(comment.postId),
+            );
+            const addedIds = new Set(addedDuringRequest.map((comment) => comment.postId));
+            this.comments.set([
+              ...addedDuringRequest,
+              ...result.content.filter((comment) => !addedIds.has(comment.postId)),
+            ]);
+          } else {
             const ids = new Set(this.comments().map((comment) => comment.postId));
             this.comments.update((comments) => [
               ...comments,
@@ -162,10 +256,14 @@ export class PostCard {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: () => {
+        next: ({ comment }) => {
           this.commentDraft = '';
           this.commentSuccess.set('Comentário publicado.');
-          untracked(() => this.loadComments());
+          this.comments.update((comments) => [
+            comment,
+            ...comments.filter((existing) => existing.postId !== comment.postId),
+          ]);
+          if (this.commentsPage < 0 && !this.commentsLoading()) this.moreComments.set(true);
         },
         error: (error: HttpErrorResponse) =>
           this.commentError.set(

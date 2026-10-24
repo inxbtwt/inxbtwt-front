@@ -6,6 +6,7 @@ export interface ProfileSummary {
 }
 
 export interface ProfileView extends ProfileSummary {
+  friendCount: number;
   bio: string | null;
   coverUrl: string | null;
   createdAt: string | null;

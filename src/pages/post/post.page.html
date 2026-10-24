@@ -9,7 +9,10 @@
       >JUST<span class="text-[#9bc300]">✳</span></a
     >
     <app-profile-search />
-    <a routerLink="/profile" class="text-xs font-bold text-inherit">Meu perfil</a>
+    <div class="flex shrink-0 items-center gap-3">
+      <app-notification-bell />
+      <a routerLink="/profile" class="text-xs font-bold text-inherit">Meu perfil</a>
+    </div>
   </header>
   <main class="mx-auto w-[min(100%_-_28px,690px)] py-6">
     <div class="mb-5 flex items-center gap-4">

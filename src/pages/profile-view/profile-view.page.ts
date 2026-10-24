@@ -1,3 +1,5 @@
+import { FriendshipActions } from '../../components/friendship-actions/friendship-actions';
+import { NotificationBell } from '../../components/notification-bell/notification-bell';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
@@ -11,23 +13,42 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { catchError, combineLatest, finalize, of, startWith, Subject, switchMap } from 'rxjs';
+import {
+  catchError,
+  combineLatest,
+  finalize,
+  of,
+  startWith,
+  Subject,
+  Subscription,
+  switchMap,
+} from 'rxjs';
 import { ProfileView } from '../../components/dto/profile/profile-search';
 import { ProfileImage } from '../../components/profile-image/profile-image';
 import { ProfilePosts } from '../../components/profile-posts/profile-posts';
 import { ProfileSearch } from '../../components/profile-search/profile-search';
 import { AuthService } from '../../services/auth.service';
+import { FriendshipService } from '../../services/friendship.service';
 import { ProfileService } from '../../services/profile.service';
 
 @Component({
   selector: 'app-profile-view-page',
-  imports: [RouterLink, ProfileImage, ProfileSearch, ProfilePosts],
+  imports: [
+    FriendshipActions,
+    NotificationBell,
+    RouterLink,
+    ProfileImage,
+    ProfileSearch,
+    ProfilePosts,
+  ],
   templateUrl: './profile-view.page.html',
 })
 export class ProfileViewPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly profiles = inject(ProfileService);
+  private readonly friendships = inject(FriendshipService);
+  private friendCountRequest?: Subscription;
   private readonly destroyRef = inject(DestroyRef);
   protected readonly auth = inject(AuthService);
   protected readonly profile = signal<ProfileView | null>(null);
@@ -54,10 +75,31 @@ export class ProfileViewPage implements OnInit {
         }).format(date);
   });
 
+  constructor() {
+    this.friendships.changes.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((friendship) => {
+      const current = this.profile();
+      if (!current || current.userId !== friendship.user.userId) return;
+      this.friendCountRequest?.unsubscribe();
+      this.friendCountRequest = this.profiles
+        .getByUsername(current.username)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (updated) =>
+            this.profile.update((profile) =>
+              profile?.userId === updated.userId
+                ? { ...profile, friendCount: updated.friendCount }
+                : profile,
+            ),
+          error: () => {},
+        });
+    });
+  }
+
   ngOnInit(): void {
     combineLatest([this.route.paramMap, this.retry.pipe(startWith(undefined))])
       .pipe(
         switchMap(([params]) => {
+          this.friendCountRequest?.unsubscribe();
           const username = params.get('username') ?? '';
           this.photoDialog()?.nativeElement.close();
           this.profile.set(null);

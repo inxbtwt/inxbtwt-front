@@ -1109,3 +1109,112 @@ input:focus-visible {
   .post-header time { margin-left: 50px; }
   .composer-footer > span { max-width: 20ch; }
 }
+
+.media-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+}
+.media-picker button {
+  border: 1px solid #111;
+  border-radius: 7px;
+  padding: 7px 10px;
+  background: #fffefa;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.media-picker button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.media-picker span {
+  color: #74746d;
+  font-size: 10px;
+}
+.media-previews {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+.media-previews figure {
+  position: relative;
+  margin: 0;
+  min-width: 0;
+  border: 1px solid #e5e2d9;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.media-previews img {
+  width: 100%;
+  height: 160px;
+  object-fit: contain;
+  background: #f4f0e7;
+}
+.media-previews figcaption {
+  padding: 6px;
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.media-previews button {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #111;
+  border-radius: 50%;
+  background: #fffefa;
+  cursor: pointer;
+}
+
+.tenor-picker {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid #e5e2d9;
+  border-radius: 8px;
+}
+.tenor-picker label { font-size: 12px; }
+.tenor-picker button,
+.tenor-preview button {
+  justify-self: start;
+  border: 1px solid #111;
+  border-radius: 7px;
+  background: #fffefa;
+  padding: 8px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.tenor-preview { display: grid; gap: 10px; max-width: 400px; margin: 12px 0; }
+
+.open-composer {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #111;
+  border-radius: 8px;
+  background: #d4ff3f;
+  padding: 15px 18px;
+  color: #111;
+  font: inherit;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: left;
+  cursor: pointer;
+}
+.open-composer:focus-visible, .close-composer:focus-visible {
+  outline: 3px solid #9bc300;
+  outline-offset: 3px;
+}
+.composer-topline { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+.close-composer { flex-shrink: 0; min-width: 36px; min-height: 36px; border: 1px solid #e5e2d9; border-radius: 7px; background: #fffefa; font-size: 22px; cursor: pointer; }
+.close-composer:disabled { opacity: .6; cursor: default; }

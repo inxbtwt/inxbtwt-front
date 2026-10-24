@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, effect, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, Subscription } from 'rxjs';
 import { Post, PostProfileTab } from '../dto/post/post';
@@ -31,15 +31,54 @@ export class ProfilePosts {
   private request?: Subscription;
 
   constructor() {
+    this.publications.removals
+      .pipe(takeUntilDestroyed(inject(DestroyRef)))
+      .subscribe(({ postId }) => {
+        this.posts.update((posts) => posts.filter((post) => post.postId !== postId));
+      });
     this.publications.activityChanges
       .pipe(takeUntilDestroyed(inject(DestroyRef)))
       .subscribe((event) => {
-        if (this.userId() !== this.auth.currentUser()?.userId) return;
-        const affectsTab =
-          (event.type === 'LIKE' && this.tab() === 'LIKES') ||
-          (event.type === 'REPOST' && this.tab() === 'PUBLICATIONS') ||
-          (event.type === 'COMMENT' && this.tab() === 'REPLIES');
-        if (affectsTab) this.load();
+        const viewer = this.auth.currentUser();
+        if (!viewer || this.userId() !== viewer.userId) return;
+        this.posts.update((posts) => {
+          if (event.type === 'LIKE' && this.tab() === 'LIKES' && !event.post.liked) {
+            return posts.filter((post) => post.postId !== event.postId);
+          }
+          if (event.type === 'COMMENT' && this.tab() === 'REPLIES' && event.comment) {
+            return [
+              event.comment,
+              ...posts.filter((post) => post.postId !== event.comment!.postId),
+            ];
+          }
+          return posts.flatMap((post) => {
+            if (post.postId !== event.postId) return [post];
+            const updated = {
+              ...event.post,
+              repostedBy: post.repostedBy,
+              activityAt: post.activityAt,
+            };
+            if (event.type === 'REPOST' && this.tab() === 'PUBLICATIONS') {
+              if (!event.post.reposted) {
+                if (post.author.userId !== viewer.userId || post.parent) return [];
+                return [{ ...updated, repostedBy: null, activityAt: post.createdAt }];
+              }
+              return [
+                {
+                  ...updated,
+                  repostedBy: {
+                    userId: viewer.userId,
+                    name: viewer.name,
+                    username: viewer.username,
+                    photoUrl: post.author.userId === viewer.userId ? post.author.photoUrl : null,
+                  },
+                  activityAt: new Date().toISOString(),
+                },
+              ];
+            }
+            return [updated];
+          });
+        });
       });
     effect((onCleanup) => {
       const userId = this.userId();
@@ -49,7 +88,7 @@ export class ProfilePosts {
       this.page = -1;
       this.hasNext.set(false);
       this.error.set('');
-      if (userId) this.load();
+      if (userId) untracked(() => this.load());
       onCleanup(() => this.request?.unsubscribe());
     });
   }

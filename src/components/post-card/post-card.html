@@ -50,7 +50,40 @@
           ><span>@{{ item.author.username }}</span></span
         >
       </a>
-      <time [attr.datetime]="item.createdAt">{{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}</time>
+      <div class="post-metadata">
+        <time [attr.datetime]="item.createdAt">{{
+          item.createdAt | date: 'dd/MM/yyyy HH:mm'
+        }}</time>
+        @if (item.updatedAt !== item.createdAt) {
+          <span class="edited-label">Editado</span>
+        }
+        @if (item.author.userId === auth.currentUser()?.userId) {
+          <div
+            class="post-management"
+            (click)="$event.stopPropagation()"
+            (keydown.enter)="$event.stopPropagation()"
+          >
+            <button
+              type="button"
+              class="options-toggle"
+              aria-label="Opções da publicação"
+              [attr.aria-expanded]="menuOpen()"
+              (click)="menuOpen.set(!menuOpen())"
+              [disabled]="busy() || commenting() || editing() || confirmingDelete()"
+            >
+              ⋯
+            </button>
+            @if (menuOpen()) {
+              <div class="options-list" role="group" aria-label="Gerenciar publicação">
+                <button type="button" (click)="startEdit()">Editar publicação</button>
+                <button type="button" class="delete-action" (click)="requestDelete()">
+                  Excluir publicação
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </div>
     </header>
     @if (item.parent) {
       <div class="reply-context">
@@ -68,12 +101,72 @@
         <p>{{ item.parent.content }}</p>
       </div>
     }
-    <p class="content">{{ item.content }}</p>
+    @if (editing()) {
+      <form
+        class="post-edit"
+        (ngSubmit)="saveEdit()"
+        (click)="$event.stopPropagation()"
+        [attr.aria-busy]="busy()"
+      >
+        <label [for]="'edit-' + item.postId">Editar publicação</label>
+        <textarea
+          [id]="'edit-' + item.postId"
+          name="editContent"
+          [(ngModel)]="editDraft"
+          rows="4"
+          [disabled]="busy()"
+        ></textarea>
+        @if (item.media?.length) {
+          <p>As imagens e o GIF anexados serão mantidos.</p>
+        }
+        <div class="management-actions">
+          <button type="button" (click)="editing.set(false)" [disabled]="busy()">Cancelar</button>
+          <button
+            type="submit"
+            class="save-edit"
+            [disabled]="busy() || (!editDraft.trim() && !item.media?.length)"
+          >
+            {{ busy() ? 'Salvando…' : 'Salvar alterações' }}
+          </button>
+        </div>
+      </form>
+    } @else if (item.content) {
+      <p class="content">{{ item.content }}</p>
+    }
+    @if (confirmingDelete()) {
+      <section
+        class="delete-confirmation"
+        role="alertdialog"
+        [attr.aria-labelledby]="'delete-title-' + item.postId"
+        [attr.aria-describedby]="'delete-description-' + item.postId"
+        (click)="$event.stopPropagation()"
+      >
+        <h3 [id]="'delete-title-' + item.postId">Excluir publicação?</h3>
+        <p [id]="'delete-description-' + item.postId">
+          O texto e os anexos serão removidos. As respostas de outras pessoas serão preservadas.
+        </p>
+        <div class="management-actions">
+          <button type="button" (click)="confirmingDelete.set(false)" [disabled]="busy()">
+            Cancelar
+          </button>
+          <button type="button" class="confirm-delete" (click)="deletePost()" [disabled]="busy()">
+            {{ busy() ? 'Excluindo…' : 'Excluir publicação' }}
+          </button>
+        </div>
+      </section>
+    }
+    @if (item.media?.length) {
+      <div class="post-attachments" [class.multiple]="item.media.length > 1">
+        @for (attachment of item.media; track attachment.mediaId) {
+          <app-post-media [postId]="item.postId" [attachment]="attachment" />
+        }
+      </div>
+    }
     <div class="actions" role="group" aria-label="Interações da publicação">
       <button
         type="button"
         (click)="like()"
-        [disabled]="busy() || commenting()"
+        [disabled]="busy() || commenting() || editing() || confirmingDelete()"
         [attr.aria-pressed]="!!item.liked"
         [class.liked]="item.liked"
         [attr.aria-label]="item.liked ? 'Descurtir publicação' : 'Curtir publicação'"
@@ -89,7 +182,7 @@
       <button
         type="button"
         (click)="repost()"
-        [disabled]="busy() || commenting()"
+        [disabled]="busy() || commenting() || editing() || confirmingDelete()"
         [attr.aria-pressed]="!!item.reposted"
         [class.reposted]="item.reposted"
         [attr.aria-label]="item.reposted ? 'Desfazer repost' : 'Repostar publicação'"

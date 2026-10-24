@@ -9,12 +9,15 @@
       >JUST<span class="text-[#9bc300]">✳</span></a
     >
     <app-profile-search />
-    <a
-      routerLink="/profile"
-      aria-label="Abrir meu perfil"
-      class="max-w-36 truncate text-xs font-bold text-inherit no-underline"
-      >Meu perfil</a
-    >
+    <div class="flex shrink-0 items-center gap-3">
+      <app-notification-bell />
+      <a
+        routerLink="/profile"
+        aria-label="Abrir meu perfil"
+        class="max-w-36 truncate text-xs font-bold text-inherit no-underline"
+        >Meu perfil</a
+      >
+    </div>
   </header>
   <div
     class="mx-auto grid w-[min(100%_-_48px,1100px)] grid-cols-[190px_minmax(0,690px)] items-start gap-8 py-7 max-[760px]:block max-[760px]:w-[min(100%_-_28px,690px)] max-[760px]:py-4"
@@ -115,6 +118,8 @@
             @if (memberSince()) {
               <p class="text-xs text-[#74746d]">Na JUST desde {{ memberSince() }}</p>
             }
+            <p class="mt-4 mb-0 text-xs"><strong>{{ person.friendCount }}</strong>&nbsp;<span class="text-[#74746d]">{{ person.friendCount === 1 ? 'amigo' : 'amigos' }}</span></p>
+            <app-friendship-actions [userId]="person.userId" />
             <app-profile-posts [userId]="person.userId" />
           </div>
         </article>

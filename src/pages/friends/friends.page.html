@@ -1,0 +1,94 @@
+<div class="friends-shell">
+  <header>
+    <a routerLink="/feed" class="brand" aria-label="JUST, início">JUST<span>✳</span></a
+    ><app-profile-search />
+    <div class="header-actions">
+      <app-notification-bell /><a routerLink="/profile">Meu perfil</a>
+    </div>
+  </header>
+  <main>
+    <a routerLink="/feed" class="back">← Voltar ao feed</a>
+    <h1>
+      Amigos
+      @if (count() !== null) {
+        <span>({{ count() }})</span>
+      }
+    </h1>
+    <p class="intro">Encontre pessoas pela busca e envie uma solicitação pelo perfil.</p>
+    <div class="toolbar">
+      <nav aria-label="Amigos e solicitações">
+        @for (option of tabs; track option.key) {
+          <button
+            type="button"
+            (click)="tab.set(option.key)"
+            [class.active]="tab() === option.key"
+            [attr.aria-current]="tab() === option.key ? 'page' : null"
+          >
+            {{ option.label }}
+          </button>
+        }
+      </nav>
+      <button type="button" (click)="load()" [disabled]="loading()">Atualizar</button>
+    </div>
+    @if (error()) {
+      <div class="error" role="alert">
+        <p>{{ error() }}</p>
+        <button type="button" (click)="retry()" [disabled]="loading()">Tentar novamente</button>
+      </div>
+    }
+    @if (loading() && !items().length) {
+      <p class="empty" role="status">Carregando…</p>
+    } @else if (!items().length && !error()) {
+      <section class="empty" role="status">
+        <h2>
+          {{
+            tab() === 'FRIENDS'
+              ? 'Sua lista de amigos começa aqui.'
+              : tab() === 'RECEIVED'
+                ? 'Nenhuma solicitação recebida.'
+                : 'Nenhuma solicitação enviada.'
+          }}
+        </h2>
+        <p>
+          {{
+            tab() === 'FRIENDS'
+              ? 'Busque um usuário e envie uma solicitação no perfil dele.'
+              : 'As solicitações pendentes aparecerão nesta aba.'
+          }}
+        </p>
+      </section>
+    }
+    <section
+      class="friend-list"
+      aria-label="Lista de amigos e solicitações"
+      [attr.aria-busy]="loading()"
+    >
+      @for (item of items(); track item.user.userId) {
+        <article class="friend-card">
+          <a class="person" [routerLink]="['/profile', item.user.username]"
+            ><span class="avatar"
+              ><app-profile-image
+                [userId]="item.user.userId"
+                [imageUrl]="item.user.photoUrl"
+                [name]="item.user.name" /></span
+            ><span
+              ><strong>{{ item.user.name }}</strong
+              ><small>@{{ item.user.username }}</small></span
+            ></a
+          >
+          @if (item.acceptedAt) {
+            <p class="since">Amigos desde {{ item.acceptedAt | date: 'dd/MM/yyyy' }}</p>
+          } @else if (item.requestedAt) {
+            <p class="since">Solicitação de {{ item.requestedAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+          }
+          <app-friendship-actions [userId]="item.user.userId" [initial]="item" />
+        </article>
+      }
+    </section>
+    @if (hasNext()) {
+      <button type="button" class="load-more" (click)="load(false)" [disabled]="loading()">
+        {{ loading() ? 'Carregando…' : 'Carregar mais' }}
+      </button>
+    }
+  </main>
+</div>

@@ -259,3 +259,99 @@ textarea {
 .comments {
   cursor: auto;
 }
+
+.post-attachments {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+}
+.post-attachments.multiple {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.post-metadata {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.edited-label {
+  font-size: 10px;
+  color: #74746d;
+}
+.post-management {
+  position: relative;
+}
+.options-toggle {
+  border: 0;
+  background: transparent;
+  border-radius: 6px;
+  min-width: 36px;
+  min-height: 36px;
+  font-size: 24px;
+}
+.options-list {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  top: 100%;
+  display: grid;
+  min-width: 180px;
+  padding: 5px;
+  border: 1px solid #e5e2d9;
+  border-radius: 8px;
+  background: #fffefa;
+  box-shadow: 0 4px 12px #0001;
+}
+.options-list button {
+  padding: 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  text-align: left;
+  font-size: 12px;
+}
+.options-list button:hover {
+  background: #f0ede4;
+}
+.delete-action {
+  color: #9c3340;
+}
+.post-edit {
+  margin-top: 16px;
+  cursor: auto;
+}
+.post-edit p,
+.delete-confirmation p {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.management-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: 8px;
+}
+.management-actions button {
+  border: 1px solid #111;
+  border-radius: 7px;
+  padding: 8px 12px;
+  background: #fffefa;
+  font-size: 12px;
+}
+.management-actions .save-edit {
+  background: #d4ff3f;
+}
+.management-actions .confirm-delete {
+  background: #9c3340;
+  color: #fff;
+  border-color: #9c3340;
+}
+.delete-confirmation {
+  cursor: auto;
+  margin: 14px 0;
+  padding: 14px;
+  border: 1px solid #dba4ac;
+  border-radius: 8px;
+  background: #fff1f3;
+}

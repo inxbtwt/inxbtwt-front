@@ -1,0 +1,138 @@
+<div class="notifications-shell">
+  <header class="topbar">
+    <a routerLink="/feed" class="brand" aria-label="JUST, início">JUST<span>✳</span></a>
+    <app-profile-search />
+    <div class="header-actions">
+      <app-notification-bell /><a routerLink="/profile">Meu perfil</a>
+    </div>
+  </header>
+  <main>
+    <a routerLink="/feed" class="back">← Voltar ao feed</a>
+    <div class="page-heading">
+      <div>
+        <h1>Notificações</h1>
+        <p>Novidades das suas publicações e amizades.</p>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button type="button" (click)="load()" [disabled]="loading() || !!pending() || markingAll()">
+        {{ loading() ? 'Atualizando…' : 'Atualizar' }}
+      </button>
+      <button
+        type="button"
+        class="mark-all"
+        (click)="markAllRead()"
+        [disabled]="loading() || !!pending() || markingAll() || !hasUnread()"
+      >
+        {{ markingAll() ? 'Marcando…' : 'Marcar todas como lidas' }}
+      </button>
+    </div>
+    @if (error()) {
+      <div class="error" role="alert">
+        <p>{{ error() }}</p>
+        <button type="button" (click)="retry()" [disabled]="loading()">Tentar novamente</button>
+      </div>
+    }
+    @if (actionError()) {
+      <p class="error" role="alert">{{ actionError() }}</p>
+    }
+    @if (loading() && !items().length) {
+      <p class="status" role="status">Carregando notificações…</p>
+    } @else if (!items().length && !error()) {
+      <section class="empty" role="status">
+        <span aria-hidden="true">✳</span>
+        <h2>Tudo tranquilo por aqui</h2>
+        <p>Quando alguém interagir com suas publicações, o aviso aparece aqui.</p>
+      </section>
+    }
+    <section
+      class="notification-list"
+      aria-label="Lista de notificações"
+      [attr.aria-busy]="loading()"
+    >
+      @for (item of items(); track item.notificationId) {
+        <article class="notification" [class.unread]="!item.read">
+          <div class="notification-heading">
+            @if (item.actor; as actor) {
+              <a
+                class="actor"
+                [routerLink]="
+                  actor.userId === auth.currentUser()?.userId
+                    ? ['/profile']
+                    : ['/profile', actor.username]
+                "
+              >
+                <span class="avatar"
+                  ><app-profile-image
+                    [userId]="actor.userId"
+                    [imageUrl]="actor.photoUrl"
+                    [name]="actor.name"
+                /></span>
+                <span
+                  >{{ actor.name }}<small>@{{ actor.username }}</small></span
+                >
+              </a>
+            } @else {
+              <strong>JUST</strong>
+            }
+            <time [attr.datetime]="item.createdAt">{{
+              item.createdAt | date: 'dd/MM/yyyy HH:mm'
+            }}</time>
+          </div>
+          <h2>
+            {{ item.title }}
+            @if (!item.read) {
+              <span class="unread-label">Não lida</span>
+            }
+          </h2>
+          <p class="message">{{ item.message }}</p>
+          <div class="notification-actions">
+            @if (
+              item.type === 'FRIEND_REQUEST_RECEIVED' || item.type === 'FRIEND_REQUEST_ACCEPTED'
+            ) {
+              <button
+                type="button"
+                class="open-post"
+                (click)="markRead(item, true)"
+                [disabled]="loading() || !!pending() || markingAll()"
+              >
+                {{ item.type === 'FRIEND_REQUEST_RECEIVED' ? 'Ver solicitação' : 'Ver amigos' }}
+              </button>
+            }
+            @if (item.postId && item.postAvailable) {
+              <button
+                type="button"
+                class="open-post"
+                (click)="markRead(item, true)"
+                [disabled]="loading() || !!pending() || markingAll()"
+              >
+                Ver publicação ↗
+              </button>
+            } @else if (item.postId) {
+              <span class="removed-post">Esta publicação foi removida.</span>
+            }
+            @if (!item.read) {
+              <button
+                type="button"
+                (click)="markRead(item)"
+                [disabled]="loading() || !!pending() || markingAll()"
+              >
+                {{ pending() === item.notificationId ? 'Marcando…' : 'Marcar como lida' }}
+              </button>
+            }
+          </div>
+        </article>
+      }
+    </section>
+    @if (hasNext()) {
+      <button
+        type="button"
+        class="load-more"
+        (click)="load(false)"
+        [disabled]="loading() || !!pending() || markingAll()"
+      >
+        {{ loading() ? 'Carregando…' : 'Carregar mais notificações' }}
+      </button>
+    }
+  </main>
+</div>
