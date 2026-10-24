@@ -1,0 +1,150 @@
+<div class="feed-shell">
+  <header class="topbar">
+    <a class="brand" routerLink="/feed" aria-label="JUST, início">JUST<span>✳</span></a>
+
+    <label class="search-box">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="10.8" cy="10.8" r="6.8"></circle>
+        <path d="m16 16 5 5"></path>
+      </svg>
+      <input type="search" placeholder="Procurar caos..." aria-label="Procurar posts e pessoas" />
+      <kbd>/</kbd>
+    </label>
+
+    <div class="topbar-actions">
+      <button
+        class="icon-button notification-button"
+        type="button"
+        aria-label="Notificações"
+        (click)="showToast('As notificações vão aparecer aqui.')"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"></path>
+        </svg>
+      </button>
+      <a class="profile-chip" routerLink="/profile" aria-label="Abrir seu perfil">
+        <span class="avatar avatar-lime">
+          @if (profilePhoto()) {
+            <img [src]="profilePhoto()" [alt]="auth.currentUser()?.name" (error)="clearPhoto()" />
+          } @else {
+            {{ initials }}
+          }
+        </span>
+        <span class="profile-name">{{ auth.currentUser()?.name }}</span>
+        <span class="chevron">⌄</span>
+      </a>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="left-sidebar" aria-label="Navegação principal">
+      <nav class="main-nav">
+        <a class="nav-item active" routerLink="/feed" aria-current="page">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z"></path></svg>
+          <span>Meu feed</span>
+          <span class="nav-marker"></span>
+        </a>
+        <button class="nav-item" type="button" (click)="showToast('A aba de explorar vem aí!')">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m17 17 4 4M11 7v8M7 11h8"></path></svg>
+          <span>Explorar</span>
+        </button>
+        <button class="nav-item" type="button" (click)="showToast('Seus itens salvos vão aparecer aqui.')">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z"></path></svg>
+          <span>Salvos</span>
+        </button>
+        <button class="nav-item" type="button" (click)="showToast('Sua lista de amigos vai aparecer aqui.')">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM20 8v6M23 11h-6"></path></svg>
+          <span>Amigos</span>
+        </button>
+        <a class="nav-item" routerLink="/profile">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>
+          <span>Meu perfil</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-section-heading">SEUS CANTINHOS</div>
+      <div class="community-empty">
+        <span aria-hidden="true">✳</span>
+        <p>Seus cantinhos favoritos vão aparecer aqui.</p>
+      </div>
+
+      <div class="sidebar-note">
+        <span class="note-spark" aria-hidden="true">✳</span>
+        <p>Um lembrete: <strong>é só a internet.</strong> Respira, pega uma água e manda o meme.</p>
+        <span class="note-doodle" aria-hidden="true">〰</span>
+      </div>
+
+      <footer class="sidebar-footer"><span>Sobre</span><span>Regras do caos</span><span>© JUST 2026</span></footer>
+    </aside>
+
+    <main class="feed-main">
+      <section class="welcome-banner" aria-labelledby="welcome-title">
+        <div class="welcome-copy">
+          <span class="eyebrow"><span class="live-dot"></span> BEM-VINDO AO SEU CANTINHO DA INTERNET</span>
+          <h1 id="welcome-title">Oi, {{ auth.currentUser()?.name }}<span class="wave">✌️</span></h1>
+          <p>Memes, amigos e opiniões que ninguém pediu.</p>
+        </div>
+        <div class="banner-sticker" aria-hidden="true"><span>SEM</span><strong>FILTRO</strong><span class="sticker-face">😼</span></div>
+        <span class="banner-star star-one" aria-hidden="true">✳</span>
+        <span class="banner-star star-two" aria-hidden="true">✦</span>
+      </section>
+
+      <div class="feed-toolbar">
+        <h2>Seu feed</h2>
+        <span class="feed-status"><span></span> EM CONSTRUÇÃO</span>
+      </div>
+
+      <section class="empty-feed card" aria-labelledby="empty-title">
+        <span class="empty-sticker" aria-hidden="true">🫥</span>
+        <span class="empty-eyebrow">CALMA, NÃO É VOCÊ</span>
+        <h2 id="empty-title">O feed está quietinho.</h2>
+        <p>Quando houver publicações disponíveis, elas aparecem aqui. Por enquanto, aproveite o silêncio constrangedor.</p>
+        <a class="profile-button" routerLink="/profile">Ver meu perfil <span>↗</span></a>
+        <span class="empty-doodle" aria-hidden="true">〰</span>
+      </section>
+
+      <p class="feed-note">Sem posts inventados por aqui. <span>Promessa de algoritmo.</span></p>
+    </main>
+
+    <aside class="right-sidebar" aria-label="Descubra coisas">
+      <section class="side-card trend-card">
+        <div class="side-card-heading"><h2>Assuntos em alta</h2><span aria-hidden="true">✳</span></div>
+        <div class="side-empty">
+          <span aria-hidden="true">👀</span>
+          <p>Os assuntos do momento aparecem aqui quando houver dados reais.</p>
+        </div>
+      </section>
+
+      <section class="side-card people-card">
+        <div class="side-card-heading"><h2>Gente para seguir</h2><span aria-hidden="true">☺</span></div>
+        <div class="side-empty">
+          <span aria-hidden="true">🧭</span>
+          <p>As sugestões de pessoas chegam quando a descoberta estiver disponível.</p>
+        </div>
+      </section>
+
+      <section class="good-vibes-card">
+        <span class="vibes-star" aria-hidden="true">✳</span>
+        <span class="vibes-label">UM COMUNICADO IMPORTANTE</span>
+        <p>Você está indo muito bem para alguém que <strong>abriu a internet “só por 5 minutos”.</strong></p>
+        <span class="vibes-signature">— um recado sem algoritmo</span>
+        <span class="vibes-doodle" aria-hidden="true">⌁</span>
+      </section>
+
+      <div class="right-footer"><span>Regras</span><span>·</span><span>Privacidade</span><span>·</span><span>© 2026 JUST</span></div>
+    </aside>
+  </div>
+
+  <nav class="mobile-nav" aria-label="Navegação mobile">
+    <a class="mobile-nav-item selected" routerLink="/feed"><span>⌂</span>Feed</a>
+    <button class="mobile-nav-item" type="button" (click)="showToast('A aba de explorar vem aí!')"><span>⌕</span>Explorar</button>
+    <a class="mobile-create" routerLink="/profile" aria-label="Abrir seu perfil">{{ initials }}</a>
+    <button class="mobile-nav-item" type="button" (click)="showToast('As notificações vão aparecer aqui.')"><span>♧</span>Alertas</button>
+    <a class="mobile-nav-item" routerLink="/profile"><span>☻</span>Perfil</a>
+  </nav>
+
+  @if (toastMessage()) {
+    <div class="toast-message" role="status">{{ toastMessage() }}</div>
+  }
+</div>

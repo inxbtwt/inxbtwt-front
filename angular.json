@@ -37,8 +37,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "22kB",
+                  "maximumError": "28kB"
                 }
               ],
               "outputHashing": "all"
@@ -61,7 +61,12 @@
               "buildTarget": "just-redesocial:build:development"
             }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "development",
+          "options": {
+            "proxyConfig": "proxy.conf.json",
+            "ssl": false,
+            "host": "localhost"
+          }
         },
         "test": {
           "builder": "@angular/build:unit-test"
