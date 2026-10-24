@@ -3,6 +3,9 @@
     "target": "http://localhost:8081",
     "changeOrigin": true,
     "pathRewrite": { "^/api": "" },
-    "cookiePathRewrite": { "/auth/refresh": "/api/auth/refresh" }
+    "cookiePathRewrite": {
+      "/auth": "/api/auth",
+      "/auth/refresh": "/api/auth/refresh"
+    }
   }
 }

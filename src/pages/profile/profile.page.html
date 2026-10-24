@@ -1,0 +1,256 @@
+<div class="profile-shell">
+  <header class="topbar">
+    <a class="brand" routerLink="/feed" aria-label="JUST, início">JUST<span>✳</span></a>
+
+    <label class="search-box">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="10.8" cy="10.8" r="6.8"></circle>
+        <path d="m16 16 5 5"></path>
+      </svg>
+      <input type="search" placeholder="Procurar caos..." aria-label="Procurar posts e pessoas" />
+      <kbd>/</kbd>
+    </label>
+
+    <div class="topbar-actions">
+      <a class="profile-chip" routerLink="/profile" aria-label="Seu perfil">
+        <span class="avatar">
+          @if (profilePhoto()) {
+            <img [src]="profilePhoto()" [alt]="currentUser()?.name" />
+          } @else {
+            {{ getInitials() }}
+          }
+        </span>
+        <span class="profile-name">{{ currentUser()?.name }}</span>
+        <span class="chevron">⌄</span>
+      </a>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="left-sidebar" aria-label="Navegação principal">
+      <nav class="main-nav">
+        <a class="nav-item" routerLink="/feed">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z"></path></svg>
+          <span>Meu feed</span>
+        </a>
+        <button class="nav-item" type="button" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m17 17 4 4M11 7v8M7 11h8"></path></svg>
+          <span>Explorar</span>
+        </button>
+        <button class="nav-item" type="button" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z"></path></svg>
+          <span>Salvos</span>
+        </button>
+        <button class="nav-item" type="button" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM20 8v6M23 11h-6"></path></svg>
+          <span>Amigos</span>
+        </button>
+        <a class="nav-item active" routerLink="/profile" aria-current="page">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>
+          <span>Meu perfil</span>
+          <span class="nav-marker"></span>
+        </a>
+      </nav>
+
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-section-heading">SEUS CANTINHOS</div>
+      <div class="sidebar-note">
+        <span class="note-spark" aria-hidden="true">✳</span>
+        <p>Um lembrete: <strong>é só a internet.</strong> Respira, pega uma água e manda o meme.</p>
+        <span class="note-doodle" aria-hidden="true">〰</span>
+      </div>
+
+      <footer class="sidebar-footer"><span>Sobre</span><span>Regras do caos</span><span>© JUST 2026</span></footer>
+    </aside>
+
+    <main class="main-column">
+      <div class="breadcrumb"><span>JUST</span><span>›</span><strong>Perfil</strong></div>
+
+      <section class="profile-card" aria-labelledby="profile-name">
+        <div class="cover" aria-label="Capa do perfil">
+          @if (coverPhoto()) {
+            <img class="cover-photo" [src]="coverPhoto()" alt="" />
+          }
+          <span class="cover-sticker" aria-hidden="true">🐈</span>
+          <span class="cover-label">ÁREA DE RESPIRO DO CAOS</span>
+        </div>
+
+        <div class="profile-content">
+          @if (editing()) {
+            <section class="edit-panel" aria-labelledby="edit-title">
+              <div class="edit-heading">
+                <div>
+                  <span class="section-kicker">AJUSTES DA CONTA</span>
+                  <h2 id="edit-title">Editar seu perfil</h2>
+                </div>
+                <button class="close-edit" type="button" aria-label="Cancelar edição" (click)="cancelEditing()">×</button>
+              </div>
+
+              <form #profileForm="ngForm" (ngSubmit)="saveProfile()" [attr.aria-busy]="saving()">
+                <label for="profile-name-input">Nome</label>
+                <input
+                  id="profile-name-input"
+                  name="name"
+                  [(ngModel)]="name"
+                  required
+                  minlength="3"
+                  maxlength="30"
+                  autocomplete="name"
+                  [disabled]="saving()"
+                />
+
+                <label for="profile-email-input">E-mail</label>
+                <input
+                  id="profile-email-input"
+                  name="email"
+                  type="email"
+                  [(ngModel)]="email"
+                  required
+                  email
+                  autocomplete="email"
+                  [disabled]="saving()"
+                />
+
+                <label for="profile-phone-input">Telefone</label>
+                <input
+                  id="profile-phone-input"
+                  name="phone"
+                  type="tel"
+                  [(ngModel)]="phone"
+                  required
+                  maxlength="255"
+                  autocomplete="tel"
+                  [disabled]="saving()"
+                />
+
+                @if (feedback()) {
+                  <p class="feedback" role="alert">{{ feedback() }}</p>
+                }
+
+                <div class="edit-actions">
+                  <button class="cancel-button" type="button" [disabled]="saving()" (click)="cancelEditing()">Cancelar</button>
+                  <button class="save-button" type="submit" [disabled]="profileForm.invalid || saving()">
+                    {{ saving() ? 'Salvando…' : 'Salvar alterações' }}
+                  </button>
+                </div>
+              </form>
+            </section>
+          } @else {
+            <div class="profile-actions">
+              <span class="profile-avatar">
+                @if (profilePhoto()) {
+                  <img [src]="profilePhoto()" [alt]="currentUser()?.name" />
+                } @else {
+                  {{ getInitials() }}
+                }
+              </span>
+              <div class="action-group">
+                <button class="logout-button" type="button" [disabled]="loggingOut()" (click)="logout()">
+                  {{ loggingOut() ? 'Saindo…' : 'Sair' }}
+                </button>
+                <button class="edit-button" type="button" (click)="startEditing()">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5 4 4M4 20l4-.8L19.4 7.8a2.1 2.1 0 0 0-3-3L5 16.2 4 20Z"></path></svg>
+                  Editar perfil
+                </button>
+              </div>
+            </div>
+
+            <h1 class="profile-name" id="profile-name">{{ currentUser()?.name }}</h1>
+            <p class="profile-email">{{ currentUser()?.email }}</p>
+            <p class="profile-bio">Uma bio mais elaborada ainda não foi adicionada. Sua personalidade não cabe num formulário mesmo.</p>
+
+            <div class="profile-meta">
+              @if (currentUser()?.phone) {
+                <span class="meta-item">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h4l2 5-3 2a16 16 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2Z"></path></svg>
+                  {{ currentUser()?.phone }}
+                </span>
+              }
+              @if (memberSince()) {
+                <span class="meta-item">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                  Na JUST desde {{ memberSince() }}
+                </span>
+              }
+            </div>
+
+            @if (feedback()) {
+              <p class="feedback success-feedback" role="status">{{ feedback() }}</p>
+            }
+          }
+
+          <nav class="profile-tabs" aria-label="Conteúdo do perfil">
+            @for (tab of tabs; track tab) {
+              <button
+                type="button"
+                [class.active]="selectedTab() === tab"
+                [attr.aria-current]="selectedTab() === tab ? 'page' : null"
+                (click)="selectTab(tab)"
+              >
+                {{ tab }}
+              </button>
+            }
+          </nav>
+
+          <div class="timeline-empty" aria-live="polite">
+            <span class="empty-sticker" aria-hidden="true">🫥</span>
+            @switch (selectedTab()) {
+              @case ('Publicações') {
+                <h2>A timeline está de boas.</h2>
+                <p>Suas publicações vão aparecer aqui quando você tiver algo para compartilhar. Sem pressa, sem cobrança do algoritmo.</p>
+              }
+              @case ('Respostas') {
+                <h2>Nenhuma resposta por enquanto.</h2>
+                <p>As respostas que você publicar aparecem aqui.</p>
+              }
+              @case ('Mídia') {
+                <h2>Sem mídia por enquanto.</h2>
+                <p>Fotos e vídeos compartilhados por você aparecem aqui.</p>
+              }
+              @case ('Curtidas') {
+                <h2>Seu mural de curtidas está vazio.</h2>
+                <p>Quando você curtir uma publicação, ela aparece nesta aba.</p>
+              }
+            }
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <aside class="right-column" aria-label="Informações do perfil">
+      <section class="side-card">
+        <div class="side-heading"><h2>Seu perfil, suas regras</h2><span>✳</span></div>
+        <div class="profile-preview">
+          <span class="preview-label">ASSIM A GALERA VAI TE VER</span>
+          <div class="preview-person">
+            <span class="avatar">
+              @if (profilePhoto()) {
+                <img [src]="profilePhoto()" [alt]="currentUser()?.name" />
+              } @else {
+                {{ getInitials() }}
+              }
+            </span>
+            <div><strong>{{ currentUser()?.name }}</strong><span>{{ currentUser()?.email }}</span></div>
+          </div>
+          <p>Uma bio legal ajuda a galera a sacar seu nível de caos logo de cara.</p>
+        </div>
+      </section>
+
+      <section class="tip-card">
+        <span class="tip-label">DICA NÃO SOLICITADA</span>
+        <p>Uma boa bio pode ter <strong>até 100% de personalidade.</strong> Fonte: vozes da minha cabeça.</p>
+        <span class="tip-doodle" aria-hidden="true">〰</span>
+      </section>
+
+      <div class="right-footer"><span>Regras</span><span>·</span><span>Privacidade</span><span>·</span><span>© 2026 JUST</span></div>
+    </aside>
+  </div>
+
+  <nav class="mobile-nav" aria-label="Navegação mobile">
+    <a class="mobile-nav-item" routerLink="/feed"><span>⌂</span>Feed</a>
+    <a class="mobile-nav-item" routerLink="/feed"><span>⌕</span>Explorar</a>
+    <a class="mobile-create" routerLink="/feed" aria-label="Abrir feed">JUST</a>
+    <a class="mobile-nav-item" routerLink="/feed"><span>♧</span>Alertas</a>
+    <a class="mobile-nav-item selected" routerLink="/profile"><span>☻</span>Perfil</a>
+  </nav>
+</div>

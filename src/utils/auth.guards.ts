@@ -18,5 +18,5 @@ export const guestGuard: CanActivateFn = () => {
 
   return auth
     .checkSession()
-    .pipe(map((authenticated) => (authenticated ? router.createUrlTree(['/home']) : true)));
+    .pipe(map((authenticated) => (authenticated ? router.createUrlTree(['/feed']) : true)));
 };

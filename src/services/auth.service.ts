@@ -64,6 +64,53 @@ export class AuthService {
     );
   }
 
+  register(name: string, email: string, phone: string, password: string): Observable<AuthUser> {
+    this.sessionError.set('');
+
+    return this.csrf().pipe(
+      switchMap((csrf) =>
+        this.http.post(
+          '/api/users',
+          { name, email, phone, password },
+          {
+            headers: { [csrf.headerName]: csrf.token },
+            withCredentials: true,
+          },
+        ),
+      ),
+      switchMap(() => this.login(email, password)),
+    );
+  }
+
+  logout(): Observable<void> {
+    return this.csrf().pipe(
+      switchMap((csrf) =>
+        this.http.post('/api/auth/logout', null, {
+          headers: { [csrf.headerName]: csrf.token },
+          withCredentials: true,
+        }),
+      ),
+      tap(() => this.user.set(null)),
+      map(() => undefined),
+    );
+  }
+
+  updateProfile(
+    userId: string,
+    profile: Pick<AuthUser, 'name' | 'email' | 'phone'>,
+  ): Observable<AuthUser> {
+    return this.csrf().pipe(
+      switchMap((csrf) =>
+        this.http.patch<ApiResponse<AuthUser>>(`/api/users/${userId}`, profile, {
+          headers: { [csrf.headerName]: csrf.token },
+          withCredentials: true,
+        }),
+      ),
+      map((response) => response.data),
+      tap((user) => this.user.set(user)),
+    );
+  }
+
   private csrf(): Observable<CsrfToken> {
     return this.http
       .get<ApiResponse<CsrfToken>>('/api/auth/csrf', {

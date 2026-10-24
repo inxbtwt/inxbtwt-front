@@ -1,35 +1,508 @@
-<main>
-  <h1>Entrar</h1>
-  <p>Acesse sua conta para continuar.</p>
+<div
+  class="min-h-dvh bg-[#faf8f2] text-[#111] font-[Arial,Helvetica,sans-serif]"
+>
+  <div
+    class="mx-auto flex min-h-dvh max-w-[1540px] flex-col
+           px-6 py-6
+           md:px-[30px]
+           min-[1101px]:px-12 min-[1101px]:pt-[26px] min-[1101px]:pb-[22px]
+           min-[1600px]:pt-[38px] min-[1600px]:pb-[30px]"
+  >
+    <!-- HEADER -->
+    <header
+      class="mb-10 flex min-h-14 items-center justify-between
+             min-[801px]:mb-[58px]
+             min-[1600px]:mb-[72px]"
+    >
+      <a
+        href="/"
+        aria-label="JUST, página inicial"
+        class="relative font-['Arial_Black',Arial,sans-serif]
+               text-[44px] leading-none font-black tracking-[-5px]
+               no-underline -rotate-4
+               focus-visible:outline-3 focus-visible:outline-offset-5
+               focus-visible:outline-[#111]
+               min-[801px]:text-[55px]"
+      >
+        JUST
 
-  <form #loginForm="ngForm" (ngSubmit)="login()">
-    <label for="email">E-mail</label>
-    <input
-      id="email"
-      name="email"
-      type="email"
-      autocomplete="username"
-      [(ngModel)]="email"
-      required
-      email
-    />
+        <span
+          class="absolute top-1 -right-6 h-[35px] w-5"
+          aria-hidden="true"
+        >
+          <i
+            class="absolute h-[5px] w-[18px] -rotate-[30deg]
+                   rounded-sm bg-[#d4ff3f]"
+          ></i>
 
-    <label for="password">Senha</label>
-    <input
-      id="password"
-      name="password"
-      type="password"
-      autocomplete="current-password"
-      [(ngModel)]="password"
-      required
-    />
+          <i
+            class="absolute top-[13px] left-[3px] h-[5px] w-[18px]
+                   rotate-[8deg] rounded-sm bg-[#d4ff3f]"
+          ></i>
 
-    @if (error() || auth.error()) {
-      <p role="alert">{{ error() || auth.error() }}</p>
-    }
+          <i
+            class="absolute top-[26px] h-[5px] w-[18px]
+                   rotate-[28deg] rounded-sm bg-[#d4ff3f]"
+          ></i>
+        </span>
+      </a>
 
-    <button type="submit" [disabled]="loginForm.invalid || submitting()">
-      {{ submitting() ? 'Entrando…' : 'Entrar' }}
-    </button>
-  </form>
-</main>
+      <button
+        type="button"
+        (click)="toggleMode()"
+        [disabled]="submitting()"
+        class="relative mr-[10px] cursor-pointer border-0 bg-transparent p-0
+               text-sm font-bold text-inherit
+               underline decoration-[#d4ff3f] decoration-4 underline-offset-[7px]
+               disabled:cursor-default
+               focus-visible:outline-3 focus-visible:outline-offset-5
+               focus-visible:outline-[#111]
+               min-[801px]:text-[17px]"
+      >
+        {{ creatingAccount() ? 'Já tenho conta' : 'Criar conta' }}
+
+        <span
+          class="absolute -top-5 -right-[25px] rotate-[15deg]
+                 text-[32px] text-[#d4ff3f]"
+          aria-hidden="true"
+        >
+          ✳
+        </span>
+      </button>
+    </header>
+
+    <!-- MAIN -->
+    <main
+      class="grid flex-1 grid-cols-1 items-start gap-[30px]
+             min-[801px]:grid-cols-[minmax(0,1fr)_minmax(350px,0.95fr)]
+             min-[801px]:items-center
+             min-[1101px]:grid-cols-[minmax(0,1.35fr)_minmax(380px,0.9fr)]
+             min-[1101px]:gap-[54px]"
+    >
+      <!-- INTRO -->
+      <section aria-labelledby="intro-title">
+        <h1
+          id="intro-title"
+          class="relative z-[1] m-0
+                 font-['Arial_Black',Arial,sans-serif]
+                 text-[clamp(39px,8vw,60px)]
+                 leading-[0.98] font-black tracking-[-0.07em]
+                 min-[801px]:text-[60px]
+                 min-[1101px]:text-[clamp(50px,5.5vw,84px)]"
+        >
+          Seu feed merece<br />
+          um pouco de
+
+          <span
+            class="relative isolate whitespace-nowrap
+                   before:absolute before:-z-10
+                   before:inset-[5%_-7%_-5%]
+                   before:-rotate-4
+                   before:rounded-[46%_54%_42%_48%]
+                   before:bg-[#d4ff3f]"
+          >
+            caos.
+          </span>
+        </h1>
+
+        <p
+          class="mt-[18px] mb-0 max-w-[32ch]
+                 text-[17px] leading-[1.4] tracking-[-0.5px]
+                 min-[801px]:mt-6
+                 min-[801px]:max-w-none
+                 min-[801px]:text-[clamp(18px,2vw,27px)]"
+        >
+          Memes, amigos e opiniões que ninguém pediu.
+        </p>
+
+        <!-- MEME COLLAGE -->
+        <div
+          class="relative mt-4 -mr-2 -ml-[22px] hidden
+                 aspect-[1.65]
+                 min-[801px]:block"
+          aria-hidden="true"
+        >
+          <img
+            src="/images/auth-meme-collage.png"
+            width="1536"
+            height="1024"
+            alt=""
+            fetchpriority="high"
+            class="block h-full w-full object-contain"
+          />
+
+          <span
+            class="absolute top-[30%] left-[1%]
+                   rotate-[-12deg]
+                   rounded-[40%_26%_30%_22%]
+                   border-2 border-[#111]
+                   bg-[#ccb1ff]
+                   px-[18px] py-[13px]
+                   text-center
+                   text-[clamp(17px,1.8vw,25px)]
+                   leading-[1.1] font-black
+                   shadow-[5px_6px_0_#111]"
+          >
+            100%<br />
+            SEM FILTRO
+          </span>
+
+          <span
+            class="absolute top-[10%] right-[1%]
+                   rotate-[9deg]
+                   rounded-[50%]
+                   border-[3px] border-[#111]
+                   bg-[#d4ff3f]
+                   px-[21px] py-[14px]
+                   text-[clamp(20px,2.5vw,34px)]
+                   font-black italic tracking-[-2px]"
+          >
+            KKKKKK
+          </span>
+
+          <svg
+            class="absolute top-[35%] -right-[6%] hidden w-[19%]
+                   stroke-[#111] stroke-[6]
+                   min-[1101px]:block"
+            viewBox="0 0 160 85"
+            fill="none"
+          >
+            <path
+              class="[stroke-linecap:round] [stroke-linejoin:round]"
+              d="M7 75C45 24 91 18 146 27M123 8l27 19-27 17"
+            />
+          </svg>
+        </div>
+      </section>
+
+      <!-- LOGIN CARD -->
+      <section
+        aria-labelledby="form-title"
+        class="mr-[7px] mb-4
+               rounded-[17px]
+               border-2 border-[#111]
+               bg-white/30
+               px-[26px] py-[30px]
+               shadow-[9px_10px_0_#111]
+               min-[801px]:mr-0 min-[801px]:p-[32px_26px]
+               min-[1101px]:p-[40px_38px_32px]"
+      >
+        <span
+          class="mb-6 inline-block -rotate-2
+                 rounded-[14px] bg-[#ccb1ff]
+                 px-[15px] py-[9px]
+                 text-xs font-extrabold tracking-[2px]"
+        >
+          {{ creatingAccount() ? 'CHEGA MAIS' : 'BEM-VINDO AO CAOS' }}
+        </span>
+
+        <h2
+          id="form-title"
+          class="m-0
+                 font-['Arial_Black',Arial,sans-serif]
+                 text-[36px] leading-[1.15]
+                 font-black tracking-[-2.5px]
+                 min-[801px]:text-[clamp(32px,3vw,45px)]"
+        >
+          {{ creatingAccount() ? 'Vem pra JUST' : 'Entrar na JUST' }}
+        </h2>
+
+        <p
+          class="mt-3 mb-[26px] text-base leading-[1.45]
+                 min-[801px]:mb-[30px] min-[801px]:text-lg"
+        >
+          {{
+            creatingAccount()
+              ? 'Seu próximo meme favorito está aqui.'
+              : 'Bom te ver de novo por aqui.'
+          }}
+        </p>
+
+        <form
+          #loginForm="ngForm"
+          (ngSubmit)="login()"
+          [attr.aria-busy]="submitting()"
+          class="grid gap-[23px]"
+        >
+          @if (creatingAccount()) {
+            <!-- NAME -->
+            <div class="grid gap-[10px]">
+              <label
+                for="name"
+                class="text-base font-bold"
+              >
+                Seu nome
+              </label>
+
+              <input
+                id="name"
+                name="name"
+                type="text"
+                autocomplete="name"
+                placeholder="Como a galera te chama?"
+                [(ngModel)]="name"
+                required
+                minlength="3"
+                maxlength="30"
+                [disabled]="submitting()"
+                class="block min-h-[55px] w-full min-w-0
+                       rounded-[9px]
+                       border-[1.5px] border-[#979b9f]
+                       bg-transparent
+                       px-4 py-[14px]
+                       text-base text-[#111]
+                       placeholder:text-[#92969b]
+                       focus:border-[#111]
+                       focus:outline-3
+                       focus:outline-offset-2
+                       focus:outline-[#d4ff3f]
+                       disabled:opacity-65"
+              />
+            </div>
+
+            <!-- PHONE -->
+            <div class="grid gap-[10px]">
+              <label
+                for="phone"
+                class="text-base font-bold"
+              >
+                Telefone
+              </label>
+
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                autocomplete="tel"
+                placeholder="DDD + número"
+                [(ngModel)]="phone"
+                required
+                maxlength="255"
+                [disabled]="submitting()"
+                class="block min-h-[55px] w-full min-w-0
+                       rounded-[9px]
+                       border-[1.5px] border-[#979b9f]
+                       bg-transparent
+                       px-4 py-[14px]
+                       text-base text-[#111]
+                       placeholder:text-[#92969b]
+                       focus:border-[#111]
+                       focus:outline-3
+                       focus:outline-offset-2
+                       focus:outline-[#d4ff3f]
+                       disabled:opacity-65"
+              />
+            </div>
+          }
+
+          <!-- EMAIL -->
+          <div class="grid gap-[10px]">
+            <label
+              for="email"
+              class="text-base font-bold"
+            >
+              E-mail
+            </label>
+
+            <input
+              id="email"
+              name="email"
+              type="email"
+              [autocomplete]="creatingAccount() ? 'email' : 'username'"
+              placeholder="seu@email.com"
+              [(ngModel)]="email"
+              required
+              email
+              [disabled]="submitting()"
+              class="block min-h-[55px] w-full min-w-0
+                     rounded-[9px]
+                     border-[1.5px] border-[#979b9f]
+                     bg-transparent
+                     px-4 py-[14px]
+                     text-base text-[#111]
+                     placeholder:text-[#92969b]
+                     focus:border-[#111]
+                     focus:outline-3
+                     focus:outline-offset-2
+                     focus:outline-[#d4ff3f]
+                     disabled:opacity-65"
+            />
+          </div>
+
+          <!-- PASSWORD -->
+          <div class="grid gap-[10px]">
+            <label
+              for="password"
+              class="text-base font-bold"
+            >
+              Senha
+            </label>
+
+            <div class="relative">
+              <input
+                id="password"
+                name="password"
+                [type]="passwordVisible() ? 'text' : 'password'"
+                [autocomplete]="creatingAccount() ? 'new-password' : 'current-password'"
+                [placeholder]="creatingAccount() ? 'Pelo menos 8 caracteres' : 'Sua senha'"
+                [(ngModel)]="password"
+                required
+                [minlength]="creatingAccount() ? 8 : 1"
+                [disabled]="submitting()"
+                class="block min-h-[55px] w-full min-w-0
+                       rounded-[9px]
+                       border-[1.5px] border-[#979b9f]
+                       bg-transparent
+                       py-[14px] pr-14 pl-4
+                       text-base text-[#111]
+                       placeholder:text-[#92969b]
+                       focus:border-[#111]
+                       focus:outline-3
+                       focus:outline-offset-2
+                       focus:outline-[#d4ff3f]
+                       disabled:opacity-65"
+              />
+
+              <button
+                type="button"
+                (click)="passwordVisible.set(!passwordVisible())"
+                [attr.aria-label]="passwordVisible() ? 'Ocultar senha' : 'Mostrar senha'"
+                [attr.aria-pressed]="passwordVisible()"
+                aria-controls="password"
+                class="absolute top-[5px] right-[5px]
+                       grid h-11 w-11 cursor-pointer place-items-center
+                       rounded-md border-0 bg-transparent
+                       focus-visible:outline-3
+                       focus-visible:outline-offset-5
+                       focus-visible:outline-[#111]"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                  class="h-[25px] w-[25px]
+                         stroke-current stroke-[1.6]"
+                >
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                  <circle cx="12" cy="12" r="3" />
+
+                  @if (passwordVisible()) {
+                    <path d="m4 3 16 18" />
+                  }
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- ERROR -->
+          @if (error() || auth.error()) {
+            <p
+              role="alert"
+              class="m-0
+                     border-l-[3px] border-[#a52a3a]
+                     bg-[#f9e9e7]
+                     p-3
+                     text-sm leading-[1.5]
+                     text-[#a52a3a]"
+            >
+              {{ error() || auth.error() }}
+            </p>
+          }
+
+          <!-- SUBMIT -->
+          <button
+            type="submit"
+            [disabled]="loginForm.invalid || submitting()"
+            class="mr-[3px] mb-[5px]
+                   flex min-h-[59px] cursor-pointer
+                   items-center justify-center gap-6
+                   rounded-[10px]
+                   border-2 border-[#111]
+                   bg-[#d4ff3f]
+                   p-[14px]
+                   text-[19px] font-extrabold text-[#111]
+                   shadow-[5px_6px_0_#111]
+                   transition-[transform,box-shadow]
+                   duration-120
+                   hover:not-disabled:-translate-x-px
+                   hover:not-disabled:-translate-y-0.5
+                   hover:not-disabled:shadow-[6px_8px_0_#111]
+                   active:not-disabled:translate-x-[3px]
+                   active:not-disabled:translate-y-[3px]
+                   active:not-disabled:shadow-[2px_3px_0_#111]
+                   disabled:cursor-default
+                   disabled:bg-[#ddec9a]
+                   disabled:text-[#535c39]
+                   motion-reduce:transition-none"
+          >
+            <span>
+              {{
+                submitting()
+                  ? 'Só um instante…'
+                  : creatingAccount()
+                    ? 'Bora fazer parte'
+                    : 'Bora entrar'
+              }}
+            </span>
+
+            <svg
+              viewBox="0 0 32 24"
+              fill="none"
+              aria-hidden="true"
+              class="h-6 w-[30px]
+                     stroke-current stroke-[2.5]
+                     [stroke-linecap:round]
+                     [stroke-linejoin:round]"
+            >
+              <path d="M3 12h25M19 3l9 9-9 9" />
+            </svg>
+          </button>
+        </form>
+
+        <!-- SIGN UP -->
+        <div
+          class="mt-[34px]
+                 flex flex-wrap justify-center gap-[6px]
+                 border-t border-[#dad8d0]
+                 pt-[26px]
+                 text-sm leading-[1.8]"
+        >
+          <span>
+            {{ creatingAccount() ? 'Já está no rolê?' : 'Ainda não tem conta?' }}
+          </span>
+
+          <button
+            type="button"
+            (click)="toggleMode()"
+            [disabled]="submitting()"
+            class="cursor-pointer border-0 bg-transparent p-0
+                   font-bold text-inherit
+                   underline decoration-[#d4ff3f]
+                   decoration-4 underline-offset-[7px]
+                   disabled:cursor-default
+                   focus-visible:outline-3
+                   focus-visible:outline-offset-5
+                   focus-visible:outline-[#111]"
+          >
+            {{ creatingAccount() ? 'Entrar' : 'Criar conta' }}
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer
+      class="mt-[34px]
+             flex items-center gap-[10px]
+             text-center text-[11px]
+             leading-[1.6] text-[#74746d]
+             before:h-px before:flex-1 before:bg-[#dad8d0]
+             after:h-px after:flex-1 after:bg-[#dad8d0]
+             min-[801px]:mt-[38px]
+             min-[801px]:gap-[25px]
+             min-[801px]:text-xs"
+    >
+      <span>Feito pra compartilhar o que não cabe no grupo.</span>
+    </footer>
+  </div>
+</div>
