@@ -1,0 +1,36 @@
+<div class="min-h-dvh bg-[#faf8f2] font-[Arial,Helvetica,sans-serif] text-[#111]">
+  <header
+    class="sticky top-0 z-10 flex min-h-[72px] items-center justify-between gap-4 border-b border-[#e5e2d9] bg-[#faf8f2]/95 px-4 py-3 backdrop-blur sm:px-9"
+  >
+    <a
+      routerLink="/feed"
+      aria-label="JUST, início"
+      class="text-[30px] font-black tracking-[-4px] text-inherit no-underline"
+      >JUST<span class="text-[#9bc300]">✳</span></a
+    >
+    <app-profile-search />
+    <a routerLink="/profile" class="text-xs font-bold text-inherit">Meu perfil</a>
+  </header>
+  <main class="mx-auto w-[min(100%_-_28px,690px)] py-6">
+    <div class="mb-5 flex items-center gap-4">
+      <a routerLink="/feed" class="text-sm text-inherit" aria-label="Voltar ao feed">← Feed</a>
+      <h1 class="m-0 text-xl font-black">Publicação</h1>
+    </div>
+    @if (loading()) {
+      <p role="status" class="py-8 text-center text-sm">Carregando publicação…</p>
+    } @else if (error()) {
+      <section role="alert" class="grid gap-4 rounded-xl border border-[#e5e2d9] bg-[#fffefa] p-6">
+        <p>{{ error() }}</p>
+        <button
+          type="button"
+          (click)="retry.next()"
+          class="justify-self-start rounded-lg border border-[#111] bg-[#d4ff3f] px-4 py-2 text-sm font-bold"
+        >
+          Tentar novamente
+        </button>
+      </section>
+    } @else if (post(); as item) {
+      <app-post-card [post]="item" [detail]="true" />
+    }
+  </main>
+</div>

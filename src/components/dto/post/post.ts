@@ -11,6 +11,14 @@ export interface Post {
   author: PostAuthor;
   createdAt: string;
   updatedAt: string;
+  likeCount: number;
+  repostCount: number;
+  commentCount: number;
+  liked: boolean;
+  reposted: boolean;
+  parent: { postId: string; content: string; author: PostAuthor } | null;
+  repostedBy: PostAuthor | null;
+  activityAt: string;
 }
 
 export interface PostPage {
@@ -19,4 +27,11 @@ export interface PostPage {
   size: number;
   hasNext: boolean;
   hasPrevious: boolean;
+}
+
+export type PostProfileTab = 'PUBLICATIONS' | 'REPLIES' | 'LIKES';
+
+export interface CommentCreated {
+  comment: Post;
+  post: Post;
 }

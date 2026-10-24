@@ -142,16 +142,7 @@
 
       <div class="post-list" aria-label="Publicações" [attr.aria-busy]="loadingFeed()">
         @for (post of posts(); track post.postId) {
-          <article class="post-card card" [attr.aria-labelledby]="'post-author-' + post.postId">
-            <header class="post-header">
-              <a class="post-author" [routerLink]="post.author.userId === auth.currentUser()?.userId ? ['/profile'] : ['/profile', post.author.username]">
-                <span class="avatar"><app-profile-image [userId]="post.author.userId" [imageUrl]="post.author.photoUrl" [name]="post.author.name" /></span>
-                <span class="post-author-info"><strong [id]="'post-author-' + post.postId">{{ post.author.name }}</strong><span>@{{ post.author.username }}</span></span>
-              </a>
-              <time [attr.datetime]="post.createdAt" [title]="post.createdAt | date:'dd/MM/yyyy HH:mm'">{{ post.createdAt | date:'dd/MM/yyyy HH:mm' }}</time>
-            </header>
-            <p class="post-content">{{ post.content }}</p>
-          </article>
+          <app-post-card [post]="post" />
         }
       </div>
       @if (posts().length && hasNext()) {

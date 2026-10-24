@@ -1,5 +1,4 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { DatePipe } from '@angular/common';
 import { Component, ElementRef, inject, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -7,7 +6,7 @@ import { finalize, of, Subscription, switchMap } from 'rxjs';
 import { ApiResponse } from '../../components/dto/api/api-response';
 import { UserPhotoUrls } from '../../components/dto/auth/user-photo-urls';
 import { ProfileSearch } from '../../components/profile-search/profile-search';
-import { ProfileImage } from '../../components/profile-image/profile-image';
+import { PostCard } from '../../components/post-card/post-card';
 import { Post } from '../../components/dto/post/post';
 import { FeedService } from '../../services/feed.service';
 import { PostService } from '../../services/post.service';
@@ -15,7 +14,7 @@ import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-home-page',
-  imports: [RouterLink, ProfileSearch, FormsModule, DatePipe, ProfileImage],
+  imports: [RouterLink, ProfileSearch, FormsModule, PostCard],
   templateUrl: './home.page.html',
   styleUrl: './home.page.scss',
 })
