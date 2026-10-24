@@ -334,7 +334,7 @@
                 for="email"
                 class="text-base font-bold"
               >
-                E-mail
+                {{ creatingAccount() ? 'E-mail' : 'E-mail ou username' }}
               </label>
 
               <div class="relative">
@@ -344,13 +344,13 @@
                   [attr.aria-invalid]="creatingAccount() && availability()['email'] === 'used'"
                   aria-describedby="email-availability"
                   name="email"
-                  type="email"
+                  [type]="creatingAccount() ? 'email' : 'text'"
                   [autocomplete]="creatingAccount() ? 'email' : 'username'"
-                  placeholder="seu@email.com"
-                  [(ngModel)]="email"
-                  (ngModelChange)="creatingAccount() && checkAvailability('email', $event)"
+                  [placeholder]="creatingAccount() ? 'seu@email.com' : 'Seu e-mail ou username'"
+                  [ngModel]="creatingAccount() ? email : loginIdentifier"
+                  (ngModelChange)="creatingAccount() ? checkAvailability('email', $event) : loginIdentifier = $event"
                   required
-                  email
+                  [email]="creatingAccount()"
                   [disabled]="submitting()"
                   class="block min-h-[55px] w-full min-w-0
                          rounded-[9px]

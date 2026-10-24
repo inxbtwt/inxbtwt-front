@@ -1,0 +1,77 @@
+<div class="search" (keydown)="keydown($event)">
+  <form class="search-input" role="search" (submit)="$event.preventDefault(); search()">
+    <button type="submit" aria-label="Pesquisar usuários">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="10.8" cy="10.8" r="6.8" />
+        <path d="m16 16 5 5" />
+      </svg>
+    </button>
+    <input
+      #searchInput
+      type="search"
+      placeholder="Buscar por username…"
+      aria-label="Buscar usuários por username"
+      maxlength="255"
+      autocomplete="off"
+      [value]="query()"
+      (input)="input(searchInput.value)"
+      (focus)="open.set(!!query().trim())"
+      [attr.aria-expanded]="open()"
+    />
+  </form>
+  @if (open()) {
+    <section class="search-results" aria-label="Resultados da busca">
+      <div class="search-heading">
+        <strong>Pessoas</strong
+        ><button type="button" (click)="close()" aria-label="Fechar pesquisa">×</button>
+      </div>
+      @if (loading()) {
+        <p role="status">Buscando usuários…</p>
+      } @else if (error()) {
+        <p role="alert">{{ error() }}</p>
+        <button class="retry" type="button" (click)="search()">Tentar novamente</button>
+      } @else if (!results().length) {
+        <p role="status">Nenhum outro usuário encontrado com esse username.</p>
+      } @else {
+        <ul>
+          @for (profile of results(); track profile.userId) {
+            <li>
+              <a
+                data-profile-result
+                [routerLink]="['/profile', profile.username]"
+                (click)="select()"
+              >
+                <span class="result-avatar"
+                  ><app-profile-image
+                    [userId]="profile.userId"
+                    [imageUrl]="profile.photoUrl"
+                    [name]="profile.name"
+                /></span>
+                <span class="result-name"
+                  ><strong>{{ profile.name }}</strong
+                  ><span>@{{ profile.username }}</span></span
+                >
+                <span aria-hidden="true">↗</span>
+              </a>
+            </li>
+          }
+        </ul>
+        @if (totalPages() > 1) {
+          <nav class="search-pages" aria-label="Páginas da pesquisa">
+            <button type="button" (click)="search(page() - 1)" [disabled]="page() === 0">
+              Anterior
+            </button>
+            <span>{{ page() + 1 }} / {{ totalPages() }}</span>
+            <button
+              type="button"
+              (click)="search(page() + 1)"
+              [disabled]="page() + 1 >= totalPages()"
+            >
+              Próxima
+            </button>
+          </nav>
+        }
+      }
+    </section>
+  }
+</div>

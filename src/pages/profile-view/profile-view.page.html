@@ -1,0 +1,158 @@
+<div class="min-h-dvh bg-[#faf8f2] font-[Arial,Helvetica,sans-serif] text-[#111]">
+  <header
+    class="sticky top-0 z-10 flex h-[72px] items-center justify-between gap-4 border-b border-[#e5e2d9] bg-[#faf8f2]/95 px-9 backdrop-blur max-[760px]:h-[60px] max-[760px]:gap-2 max-[760px]:px-4"
+  >
+    <a
+      routerLink="/feed"
+      aria-label="JUST, início"
+      class="-rotate-4 text-[35px] font-black tracking-[-4px] text-inherit no-underline max-[760px]:text-[30px]"
+      >JUST<span class="text-[#9bc300]">✳</span></a
+    >
+    <app-profile-search />
+    <div class="flex shrink-0 items-center gap-3">
+      <app-notification-bell />
+      <a
+        routerLink="/profile"
+        aria-label="Abrir meu perfil"
+        class="max-w-36 truncate text-xs font-bold text-inherit no-underline"
+        >Meu perfil</a
+      >
+    </div>
+  </header>
+  <div
+    class="mx-auto grid w-[min(100%_-_48px,1100px)] grid-cols-[190px_minmax(0,690px)] items-start gap-8 py-7 max-[760px]:block max-[760px]:w-[min(100%_-_28px,690px)] max-[760px]:py-4"
+  >
+    <aside
+      class="sticky top-24 grid gap-2 max-[760px]:mb-4 max-[760px]:flex"
+      aria-label="Navegação principal"
+    >
+      <a
+        routerLink="/feed"
+        class="rounded-lg px-3 py-3 text-sm text-inherit no-underline hover:bg-[#eae7df]"
+        >⌂ Meu feed</a
+      >
+      <a
+        routerLink="/profile"
+        class="rounded-lg px-3 py-3 text-sm text-inherit no-underline hover:bg-[#eae7df]"
+        >♙ Meu perfil</a
+      >
+    </aside>
+    <main class="min-w-0">
+      <p class="mt-0 mb-4 text-xs text-[#74746d]">
+        <a routerLink="/feed" class="text-inherit">JUST</a> › Perfil
+      </p>
+      @if (loading()) {
+        <section class="rounded-xl border border-[#e5e2d9] bg-[#fffefa] p-8" role="status">
+          Carregando perfil…
+        </section>
+      } @else if (error()) {
+        <section
+          class="grid gap-4 rounded-xl border border-[#e5e2d9] bg-[#fffefa] p-8"
+          role="alert"
+        >
+          <h1 class="m-0 text-xl font-black">{{ error() }}</h1>
+          <div class="flex flex-wrap gap-3">
+            <button
+              type="button"
+              (click)="retry.next()"
+              class="rounded-lg border border-[#111] bg-[#d4ff3f] px-4 py-3 font-bold"
+            >
+              Tentar novamente
+            </button>
+            <a
+              routerLink="/feed"
+              class="rounded-lg border border-[#111] px-4 py-3 text-inherit no-underline"
+              >Voltar ao feed</a
+            >
+          </div>
+        </section>
+      } @else if (profile(); as person) {
+        <article
+          class="overflow-hidden rounded-xl border border-[#e5e2d9] bg-[#fffefa]"
+          aria-labelledby="person-name"
+        >
+          <button
+            type="button"
+            (click)="openPhoto(true)"
+            [disabled]="!person.coverUrl"
+            aria-label="Visualizar capa do perfil"
+            class="relative block h-[177px] w-full overflow-hidden border-0 border-b border-solid border-[#111] bg-[#ccb1ff] p-0 disabled:cursor-default max-[760px]:h-[130px]"
+          >
+            @if (person.coverUrl) {
+              <app-profile-image
+                [userId]="person.userId"
+                [imageUrl]="person.coverUrl"
+                [name]="'Capa de ' + person.name"
+              />
+            } @else {
+              <span
+                aria-hidden="true"
+                class="absolute -top-12 right-6 size-48 rounded-full border-2 border-[#111] bg-[#d4ff3f]"
+              ></span>
+              <span
+                class="absolute bottom-4 left-4 -rotate-3 rounded border border-[#111] bg-[#faf8f2] px-3 py-2 text-[9px] font-black"
+                >ÁREA DE RESPIRO DO CAOS</span
+              >
+            }
+          </button>
+          <div class="px-6 pb-6 max-[760px]:px-4">
+            <button
+              type="button"
+              (click)="openPhoto()"
+              aria-label="Visualizar foto de perfil"
+              class="relative -mt-12 mb-4 block size-24 overflow-hidden rounded-full border-4 border-solid border-[#fffefa] bg-[#d4ff3f] p-0 text-3xl shadow-[0_0_0_1px_#111] max-[760px]:-mt-10 max-[760px]:size-20"
+            >
+              <app-profile-image
+                [userId]="person.userId"
+                [imageUrl]="person.photoUrl"
+                [name]="person.name"
+              />
+            </button>
+            <h1 id="person-name" class="m-0 break-words text-[28px] font-black tracking-[-1px]">
+              {{ person.name }}
+            </h1>
+            <p class="mt-1 mb-0 break-all text-xs text-[#74746d]">@{{ person.username }}</p>
+            <p class="my-4 whitespace-pre-wrap break-words text-sm leading-relaxed">
+              {{ person.bio || 'Este perfil ainda não adicionou uma bio.' }}
+            </p>
+            @if (memberSince()) {
+              <p class="text-xs text-[#74746d]">Na JUST desde {{ memberSince() }}</p>
+            }
+            <p class="mt-4 mb-0 text-xs"><strong>{{ person.friendCount }}</strong>&nbsp;<span class="text-[#74746d]">{{ person.friendCount === 1 ? 'amigo' : 'amigos' }}</span></p>
+            <app-friendship-actions [userId]="person.userId" />
+            <app-profile-posts [userId]="person.userId" />
+          </div>
+        </article>
+      }
+    </main>
+  </div>
+  <dialog
+    #photoDialog
+    aria-labelledby="person-photo-title"
+    (click)="closeBackdrop($event)"
+    class="fixed inset-0 m-auto max-h-[90dvh] w-[min(92vw,650px)] overflow-y-auto rounded-2xl border-2 border-[#111] bg-[#faf8f2] p-5 text-[#111] shadow-[6px_7px_0_#111] backdrop:bg-black/70"
+  >
+    <div class="mb-4 flex items-center justify-between gap-4">
+      <h2 id="person-photo-title" class="m-0 text-lg font-black">{{ imageTitle() }}</h2>
+      <button
+        type="button"
+        (click)="closePhoto()"
+        aria-label="Fechar imagem"
+        autofocus
+        class="size-10 rounded-lg border border-[#111] bg-[#fffefa] text-2xl"
+      >
+        ×
+      </button>
+    </div>
+    @if (profile(); as person) {
+      <div class="h-[min(60dvh,520px)] overflow-hidden rounded-lg bg-[#f0ede4]">
+        <app-profile-image
+          [userId]="person.userId"
+          [imageUrl]="imageUrl() ?? null"
+          [name]="person.name"
+          fit="contain"
+        />
+      </div>
+    }
+  </dialog>
+</div>

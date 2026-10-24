@@ -1,0 +1,86 @@
+<section class="mt-5" aria-label="Publicações do perfil" [attr.aria-busy]="loading()">
+  <div class="mb-4 flex min-h-12 items-center justify-between gap-3 border-y border-[#e5e2d9]">
+    <nav class="flex min-w-0 gap-2 self-stretch" aria-label="Conteúdo do perfil">
+      @for (option of tabs; track option.key) {
+        <button
+          type="button"
+          (click)="tab.set(option.key)"
+          [attr.aria-current]="tab() === option.key ? 'page' : null"
+          [class.border-b-2]="tab() === option.key"
+          [class.font-black]="tab() === option.key"
+          class="border-[#111] px-2 py-3 text-[11px] sm:px-3"
+        >
+          {{ option.label }}
+        </button>
+      }
+    </nav>
+    <button
+      type="button"
+      (click)="load()"
+      [disabled]="loading()"
+      class="rounded-md border border-[#e5e2d9] px-3 py-2 text-[11px] font-bold disabled:opacity-60"
+    >
+      Atualizar
+    </button>
+  </div>
+  @if (error()) {
+    <div class="mb-4 grid gap-3 rounded-lg border border-[#e5e2d9] p-4 text-xs" role="alert">
+      <p class="m-0">{{ error() }}</p>
+      <button
+        type="button"
+        (click)="retry()"
+        [disabled]="loading()"
+        class="justify-self-start underline"
+      >
+        Tentar novamente
+      </button>
+    </div>
+  }
+  @if (loading() && !posts().length) {
+    <p class="py-8 text-center text-sm text-[#74746d]" role="status">Carregando publicações…</p>
+  } @else if (!posts().length && !error()) {
+    <div
+      class="grid min-h-52 content-center justify-items-center gap-3 px-4 text-center"
+      role="status"
+    >
+      <span aria-hidden="true" class="text-4xl">🫥</span>
+      <h3 class="m-0 text-lg font-black">
+        {{
+          tab() === 'REPLIES'
+            ? 'Nenhuma resposta por aqui ainda.'
+            : tab() === 'LIKES'
+              ? 'Nenhuma curtida por aqui ainda.'
+              : 'Nenhuma publicação por aqui ainda.'
+        }}
+      </h3>
+      <p class="m-0 text-xs text-[#74746d]">
+        {{
+          tab() === 'REPLIES'
+            ? 'Os comentários deste usuário aparecem nesta aba.'
+            : tab() === 'LIKES'
+              ? 'As publicações curtidas aparecem nesta aba.'
+              : 'Publicações e reposts deste usuário aparecem aqui.'
+        }}
+      </p>
+    </div>
+  }
+  <div class="grid gap-3">
+    @for (post of posts(); track post.postId) {
+      <app-post-card [post]="post" />
+    }
+  </div>
+  @if (posts().length && hasNext()) {
+    <button
+      type="button"
+      (click)="load(false)"
+      [disabled]="loading()"
+      class="mt-4 min-h-10 w-full rounded-lg border border-[#111] bg-[#d4ff3f] px-4 py-2 text-xs font-bold disabled:opacity-60"
+    >
+      {{ loading() ? 'Carregando…' : 'Carregar mais publicações' }}
+    </button>
+  } @else if (posts().length && !error()) {
+    <p class="mt-5 text-center text-[11px] text-[#74746d]">
+      Você chegou ao fim das publicações deste perfil.
+    </p>
+  }
+</section>

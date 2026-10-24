@@ -18,5 +18,27 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('../pages/profile/profile.page').then((page) => page.ProfilePage),
   },
+  {
+    path: 'profile/:username',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('../pages/profile-view/profile-view.page').then((page) => page.ProfileViewPage),
+  },
+  {
+    path: 'posts/:postId',
+    canActivate: [authGuard],
+    loadComponent: () => import('../pages/post/post.page').then((page) => page.PostPage),
+  },
+  {
+    path: 'notifications',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('../pages/notifications/notifications.page').then((page) => page.NotificationsPage),
+  },
+  {
+    path: 'friends',
+    canActivate: [authGuard],
+    loadComponent: () => import('../pages/friends/friends.page').then((page) => page.FriendsPage),
+  },
   { path: '**', redirectTo: '' },
 ];

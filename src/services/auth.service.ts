@@ -47,14 +47,14 @@ export class AuthService {
     );
   }
 
-  login(email: string, password: string): Observable<AuthUser> {
+  login(identifier: string, password: string): Observable<AuthUser> {
     this.sessionError.set('');
 
     return this.csrf().pipe(
       switchMap((csrf) =>
         this.http.post(
           '/api/auth',
-          { email, password },
+          { identifier, password },
           {
             headers: { [csrf.headerName]: csrf.token },
             withCredentials: true,
