@@ -35,10 +35,12 @@
     </label>
 
     <div class="flex items-center gap-[18px] max-[760px]:gap-0">
-      <a
-        class="inline-flex items-center gap-[9px] text-inherit no-underline"
-        routerLink="/profile"
-        aria-label="Seu perfil"
+      <button
+        class="cursor-pointer border-0 bg-transparent p-0 text-left focus-visible:outline-3 focus-visible:outline-offset-4 inline-flex items-center gap-[9px] text-inherit no-underline"
+        type="button"
+        (click)="openPhoto()"
+        [disabled]="saving() || uploadingPhoto()"
+        aria-label="Visualizar e editar foto de perfil"
       >
         <span
           class="grid size-[34px] shrink-0 place-items-center overflow-hidden rounded-full border border-[#111]/[0.13] bg-[#d4ff3f] text-[12px] font-black max-[760px]:size-[33px]"
@@ -58,7 +60,7 @@
           >{{ currentUser()?.name }}</span
         >
         <span class="-mt-1 text-[18px] text-[#74746d] max-[760px]:hidden">⌄</span>
-      </a>
+      </button>
     </div>
   </header>
 
@@ -205,10 +207,11 @@
             ></circle>
             <circle cx="820" cy="78" r="42" fill="#ff747d" stroke="#111" stroke-width="2"></circle>
           </svg>
-          @if (coverPhoto()) {
+          @if (coverPhoto() && !coverFailed()) {
             <img
               class="absolute inset-0 z-[1] size-full object-cover"
               [src]="coverPhoto()"
+              (error)="coverFailed.set(true)"
               alt=""
             />
           }
@@ -221,9 +224,24 @@
             class="absolute bottom-[18px] left-[22px] z-[2] -rotate-3 rounded border border-[#111] bg-[#faf8f2] px-[9px] py-1.5 text-[8px] font-black tracking-[1px] max-[760px]:bottom-[13px] max-[760px]:left-[14px] max-[760px]:text-[7px]"
             >ÁREA DE RESPIRO DO CAOS</span
           >
+          <button type="button" (click)="openPhoto('COVER')"
+            [disabled]="saving() || uploadingPhoto()"
+            aria-label="Visualizar e editar capa do perfil"
+            class="absolute inset-0 z-[3] cursor-pointer text-right focus-visible:outline-3 focus-visible:-outline-offset-4 focus-visible:outline-[#111] disabled:cursor-default">
+            <span class="absolute right-3 bottom-3 rounded-lg border border-[#111] bg-[#fffefa] px-3 py-2 text-xs font-bold shadow-[2px_2px_0_#111]">Editar capa</span>
+          </button>
         </div>
 
         <div class="px-6 pb-[22px] max-[760px]:px-4 max-[760px]:pb-[18px] max-[380px]:px-3">
+          @if (loadingProfile()) {
+            <p class="mt-4 text-xs text-[#74746d]" role="status">Carregando bio e capa…</p>
+          }
+          @if (profileLoadError()) {
+            <div class="mt-4 grid gap-2 text-xs" role="alert">
+              <p class="m-0">{{ profileLoadError() }}</p>
+              <button type="button" (click)="loadProfileDetails()" class="justify-self-start underline">Tentar novamente</button>
+            </div>
+          }
           @if (editing()) {
             <section
               class="mt-5 mb-2 rounded-[9px] border border-[#e5e2d9] bg-[#faf8f2] p-[17px] max-[760px]:mt-4 max-[760px]:p-[13px]"
@@ -301,9 +319,11 @@
                       }
                     </div>
                   }
+                  <!--
                   <label for="profile-photo-input" class="font-bold">Foto de perfil (opcional)</label>
                   <input id="profile-photo-input" name="photo" type="file" accept="image/png,image/jpeg,image/webp"
                     (change)="selectPhoto($event)" [disabled]="saving()" class="w-full text-sm" />
+                  -->
                 </div>
 
                 <label class="mt-[5px] text-[10px] font-extrabold" for="profile-email-input"
@@ -336,6 +356,17 @@
                   [disabled]="saving()"
                 />
 
+                <label class="mt-[5px] text-[10px] font-extrabold" for="profile-bio-input">Bio</label>
+                <textarea
+                  id="profile-bio-input" name="bio" [(ngModel)]="bio" rows="4"
+                  placeholder="Conte um pouco sobre você" [disabled]="saving()"
+                  class="min-h-24 w-full resize-y rounded-md border border-[#c5c2b9] bg-[#fffefa] px-[10px] py-2 text-[11px] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#d4ff3f] disabled:opacity-60"
+                ></textarea>
+                <!--
+                <button type="button" (click)="openPhoto('COVER')" [disabled]="saving() || uploadingPhoto()"
+                  class="mt-2 min-h-10 justify-self-start rounded-md border border-[#111] bg-[#ccb1ff] px-3 py-2 text-[11px] font-bold disabled:opacity-60">Alterar capa</button>
+                -->
+
                 @if (feedback()) {
                   <p class="mt-2 mb-0 text-[10px] leading-[1.5] text-[#9c3340]" role="alert">
                     {{ feedback() }}
@@ -363,8 +394,9 @@
             </section>
           } @else {
             <div class="flex min-h-[73px] items-center justify-between max-[760px]:min-h-[67px]">
-              <span
-                class="-mt-[47px] grid size-24 shrink-0 rotate-[-5deg] place-items-center overflow-hidden rounded-full border-4 border-[#fffefa] bg-[#d4ff3f] text-[31px] font-black shadow-[0_0_0_1px_#111] max-[760px]:-mt-[39px] max-[760px]:size-20 max-[760px]:text-[25px]"
+              <button type="button" (click)="openPhoto()" aria-label="Visualizar e editar foto de perfil"
+                [disabled]="saving() || uploadingPhoto()"
+                class="cursor-pointer focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#111] -mt-[47px] grid size-24 shrink-0 rotate-[-5deg] place-items-center overflow-hidden rounded-full border-4 border-[#fffefa] bg-[#d4ff3f] text-[31px] font-black shadow-[0_0_0_1px_#111] max-[760px]:-mt-[39px] max-[760px]:size-20 max-[760px]:text-[25px]"
               >
                 @if (profilePhoto()) {
                   <img
@@ -375,7 +407,7 @@
                 } @else {
                   {{ getInitials() }}
                 }
-              </span>
+              </button>
               <div class="flex items-center gap-2 pt-2 max-[760px]:gap-[6px] max-[760px]:pt-[6px]">
                 <button
                   class="min-h-9 rounded-md border border-[#111] bg-[#fffefa] px-3 text-[10px] font-extrabold disabled:cursor-default disabled:opacity-60 max-[760px]:min-h-[33px] max-[760px]:px-[9px] max-[760px]:text-[9px]"
@@ -388,6 +420,7 @@
                 <button
                   class="inline-flex min-h-9 items-center justify-center gap-[7px] rounded-md border border-[#111] bg-[#d4ff3f] px-3 text-[10px] font-extrabold shadow-[2px_3px_0_#111] max-[760px]:min-h-[33px] max-[760px]:px-[9px] max-[760px]:text-[9px]"
                   type="button"
+                  [disabled]="!profileDetails() || loadingProfile() || saving()"
                   (click)="startEditing()"
                 >
                   <svg
@@ -412,10 +445,9 @@
               {{ currentUser()?.username ? '@' + currentUser()?.username : currentUser()?.email }}
             </p>
             <p
-              class="mt-[15px] mb-[13px] max-w-[460px] text-[12px] leading-[1.55] max-[760px]:mt-3 max-[760px]:text-[11px]"
+              class="mt-[15px] mb-[13px] max-w-[460px] whitespace-pre-wrap break-words text-[12px] leading-[1.55] max-[760px]:mt-3 max-[760px]:text-[11px]"
             >
-              Uma bio mais elaborada ainda não foi adicionada. Sua personalidade não cabe num
-              formulário mesmo.
+              {{ profileDetails()?.bio || 'Você ainda não adicionou uma bio.' }}
             </p>
 
             <div
@@ -550,8 +582,9 @@
             >ASSIM A GALERA VAI TE VER</span
           >
           <div class="mt-[10px] flex items-center gap-[9px]">
-            <span
-              class="grid size-[34px] shrink-0 place-items-center overflow-hidden rounded-full border border-[#111]/[0.13] bg-[#d4ff3f] text-[11px] font-black"
+            <button type="button" (click)="openPhoto()" aria-label="Visualizar e editar foto de perfil"
+                [disabled]="saving() || uploadingPhoto()"
+              class="cursor-pointer focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#111] grid size-[34px] shrink-0 place-items-center overflow-hidden rounded-full border border-[#111]/[0.13] bg-[#d4ff3f] text-[11px] font-black"
             >
               @if (profilePhoto()) {
                 <img
@@ -562,7 +595,7 @@
               } @else {
                 {{ getInitials() }}
               }
-            </span>
+            </button>
             <div class="grid min-w-0 gap-[3px]">
               <strong class="overflow-hidden text-[10px] text-ellipsis whitespace-nowrap">{{
                 currentUser()?.name
@@ -573,8 +606,8 @@
               >
             </div>
           </div>
-          <p class="mt-3 mb-0 text-[9px] leading-[1.6] text-[#646159]">
-            Uma bio legal ajuda a galera a sacar seu nível de caos logo de cara.
+          <p class="mt-3 mb-0 whitespace-pre-wrap break-words text-[9px] leading-[1.6] text-[#646159]">
+            {{ profileDetails()?.bio || 'Uma bio legal ajuda a galera a sacar seu nível de caos logo de cara.' }}
           </p>
         </div>
       </section>
@@ -637,4 +670,62 @@
       ><span class="text-[20px] leading-[1.15]">☻</span>Perfil</a
     >
   </nav>
+  <dialog
+    #photoDialog
+    aria-labelledby="photo-viewer-title"
+    (cancel)="closePhoto($event)"
+    (click)="closePhotoOnBackdrop($event)"
+    class="fixed inset-0 m-auto max-h-[90dvh] w-[min(92vw,600px)] overflow-y-auto rounded-2xl border-2 border-[#111] bg-[#faf8f2] p-0 text-[#111] shadow-[8px_9px_0_#111] backdrop:bg-black/70"
+  >
+    <div class="grid gap-5 p-5 sm:p-7" [attr.aria-busy]="uploadingPhoto()">
+      <div class="flex items-center justify-between gap-4">
+        <h2 id="photo-viewer-title" class="m-0 text-xl font-black">{{ photoTitle() }}</h2>
+        <button type="button" (click)="closePhoto()" [disabled]="uploadingPhoto()"
+          [attr.aria-label]="'Fechar visualização: ' + photoTitle()" autofocus
+          class="grid size-10 place-items-center rounded-lg border border-[#111] bg-[#fffefa] text-2xl disabled:opacity-60">×</button>
+      </div>
+      <div class="grid min-h-52 place-items-center overflow-hidden rounded-xl bg-[#f0ede4]">
+        @if (viewerImage()) {
+          <img [src]="viewerImage()" [alt]="photoTitle() + ' de ' + currentUser()?.name"
+            class="max-h-[55dvh] w-full object-contain" />
+        } @else {
+          <div class="grid gap-3 justify-items-center p-8">
+            <span class="grid size-28 place-items-center rounded-full bg-[#d4ff3f] text-4xl font-black">{{ getInitials() }}</span>
+            <p class="m-0 text-sm">{{ photoType() === 'COVER' ? 'Você ainda não adicionou uma capa.' : 'Você ainda não adicionou uma foto.' }}</p>
+          </div>
+        }
+      </div>
+      @if (photoPreview()) {
+        <p class="m-0 text-sm text-[#74746d]">Prévia da imagem escolhida. Salve para atualizar seu perfil.</p>
+      }
+      @if (photoFeedback()) {
+        <p class="m-0 text-sm" role="status">{{ photoFeedback() }}</p>
+      }
+      <div class="flex flex-wrap justify-end gap-3">
+        <label
+          class="relative inline-flex min-h-11 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-[#111] bg-[#ccb1ff] px-4 py-2 font-bold focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-[#111]"
+          [class.opacity-60]="uploadingPhoto()"
+          [class.cursor-default]="uploadingPhoto()"
+        >
+          {{ photoPreview() ? 'Escolher outra imagem' : photoType() === 'COVER' ? 'Escolher capa' : 'Editar foto' }}
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            [attr.aria-label]="photoType() === 'COVER' ? 'Escolher nova capa' : 'Escolher nova foto de perfil'"
+            (change)="selectViewerPhoto($event)"
+            [disabled]="uploadingPhoto()"
+            class="absolute inset-0 size-full cursor-pointer opacity-0 disabled:cursor-default"
+          />
+        </label>
+        @if (photoPreview()) {
+          <button type="button" (click)="resetPhotoPreview()" [disabled]="uploadingPhoto()"
+            class="min-h-11 rounded-lg border border-[#111] px-4 py-2 font-bold disabled:opacity-60">Cancelar alteração</button>
+          <button type="button" (click)="savePhoto()" [disabled]="uploadingPhoto() || saving()"
+            class="min-h-11 rounded-lg border border-[#111] bg-[#d4ff3f] px-4 py-2 font-bold shadow-[2px_3px_0_#111] disabled:opacity-60">
+            {{ uploadingPhoto() ? 'Salvando…' : photoType() === 'COVER' ? 'Salvar capa' : 'Salvar foto' }}
+          </button>
+        }
+      </div>
+    </div>
+  </dialog>
 </div>

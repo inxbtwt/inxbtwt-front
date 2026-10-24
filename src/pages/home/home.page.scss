@@ -182,6 +182,14 @@ input:focus-visible {
   font-weight: 900;
 }
 
+.avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
 .profile-chip .avatar {
   width: 34px;
   height: 34px;

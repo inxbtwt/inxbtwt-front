@@ -1,9 +1,19 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { catchError, finalize, map, of, switchMap, Subscription } from 'rxjs';
+import { catchError, finalize, map, of, switchMap, Subscription, tap } from 'rxjs';
 import { ApiResponse } from '../../components/dto/api/api-response';
+import { UserProfile } from '../../components/dto/auth/user-profile';
 import { UserPhotoUrls } from '../../components/dto/auth/user-photo-urls';
 import { AuthService } from '../../services/auth.service';
 
@@ -20,6 +30,132 @@ export class ProfilePage implements OnInit, OnDestroy {
   protected readonly auth = inject(AuthService);
   protected readonly profilePhoto = signal('');
   protected readonly coverPhoto = signal('');
+  protected readonly profileDetails = signal<UserProfile | null>(null);
+  protected readonly loadingProfile = signal(false);
+  protected readonly profileLoadError = signal('');
+  protected readonly coverFailed = signal(false);
+  protected bio = '';
+  private profileRequest?: Subscription;
+
+  protected loadProfileDetails(): void {
+    this.profileRequest?.unsubscribe();
+    this.loadingProfile.set(true);
+    this.profileLoadError.set('');
+    this.profileRequest = this.auth
+      .getUserProfile()
+      .pipe(finalize(() => this.loadingProfile.set(false)))
+      .subscribe({
+        next: (profile) => this.applyProfileDetails(profile),
+        error: () =>
+          this.profileLoadError.set('Não foi possível carregar a bio e a capa. Tente novamente.'),
+      });
+  }
+
+  private applyProfileDetails(profile: UserProfile): void {
+    this.profileDetails.set(profile);
+  }
+  protected readonly photoDialog = viewChild<ElementRef<HTMLDialogElement>>('photoDialog');
+  protected readonly photoPreview = signal('');
+  protected readonly photoType = signal<'PROFILE' | 'COVER'>('PROFILE');
+  protected readonly photoTitle = computed(() =>
+    this.photoType() === 'COVER' ? 'Capa do perfil' : 'Foto de perfil',
+  );
+  protected readonly viewerImage = computed(
+    () =>
+      this.photoPreview() ||
+      (this.photoType() === 'COVER' ? this.coverPhoto() : this.profilePhoto()),
+  );
+  protected readonly uploadingPhoto = signal(false);
+  protected readonly photoFeedback = signal('');
+  private viewerPhoto: File | null = null;
+  private photoUpload?: Subscription;
+
+  protected openPhoto(type: 'PROFILE' | 'COVER' = 'PROFILE'): void {
+    if (this.uploadingPhoto() || this.saving()) {
+      return;
+    }
+    this.photoType.set(type);
+    this.resetPhotoPreview();
+    this.photoFeedback.set('');
+    this.photoDialog()?.nativeElement.showModal();
+  }
+
+  protected closePhotoOnBackdrop(event: MouseEvent): void {
+    if (event.target === event.currentTarget) {
+      this.closePhoto();
+    }
+  }
+
+  protected closePhoto(event?: Event): void {
+    if (this.uploadingPhoto()) {
+      event?.preventDefault();
+      return;
+    }
+    this.photoDialog()?.nativeElement.close();
+    this.resetPhotoPreview();
+  }
+
+  protected selectViewerPhoto(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) {
+      return;
+    }
+    this.photoFeedback.set('');
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+      this.photoFeedback.set('Selecione uma imagem PNG, JPEG ou WebP.');
+      return;
+    }
+    this.resetPhotoPreview();
+    this.viewerPhoto = file;
+    this.photoPreview.set(URL.createObjectURL(file));
+  }
+
+  protected resetPhotoPreview(): void {
+    if (this.photoPreview()) {
+      URL.revokeObjectURL(this.photoPreview());
+    }
+    this.photoPreview.set('');
+    this.viewerPhoto = null;
+  }
+
+  protected savePhoto(): void {
+    const userId = this.currentUser()?.userId;
+    const file = this.viewerPhoto;
+    if (!userId || !file || this.uploadingPhoto() || this.saving()) {
+      return;
+    }
+    this.uploadingPhoto.set(true);
+    this.photoFeedback.set('');
+    const type = this.photoType();
+    this.photoUpload = this.auth
+      .uploadUserPhoto(userId, file, type)
+      .pipe(finalize(() => this.uploadingPhoto.set(false)))
+      .subscribe({
+        next: (uploaded) => {
+          const target = type === 'COVER' ? this.coverPhoto : this.profilePhoto;
+          this.replacePhoto(target, URL.createObjectURL(file));
+          if (type === 'COVER') {
+            this.coverFailed.set(false);
+            this.profileDetails.update((profile) =>
+              profile ? { ...profile, coverUrl: uploaded.url } : profile,
+            );
+          }
+          this.resetPhotoPreview();
+          this.photoFeedback.set(
+            type === 'COVER' ? 'Capa atualizada.' : 'Foto de perfil atualizada.',
+          );
+        },
+        error: (error: HttpErrorResponse) =>
+          this.photoFeedback.set(
+            error.status === 400 || error.status === 413
+              ? error.error?.message || 'Confira o formato e o tamanho da imagem.'
+              : 'Não foi possível salvar a imagem. Tente novamente.',
+          ),
+      });
+  }
+
   protected readonly editing = signal(false);
   protected readonly saving = signal(false);
   protected readonly loggingOut = signal(false);
@@ -80,6 +216,7 @@ export class ProfilePage implements OnInit, OnDestroy {
       );
     }
     this.loadPhotos();
+    this.loadProfileDetails();
   }
 
   private loadPhotos(): void {
@@ -126,7 +263,12 @@ export class ProfilePage implements OnInit, OnDestroy {
           withCredentials: true,
         })
         .subscribe({
-          next: (photo) => this.replacePhoto(target, URL.createObjectURL(photo)),
+          next: (photo) => {
+            this.replacePhoto(target, URL.createObjectURL(photo));
+            if (target === this.coverPhoto) {
+              this.coverFailed.set(false);
+            }
+          },
           error: () =>
             this.feedback.set('Não foi possível carregar a imagem do perfil. Tente novamente.'),
         }),
@@ -134,13 +276,16 @@ export class ProfilePage implements OnInit, OnDestroy {
   }
 
   private replacePhoto(target: typeof this.profilePhoto, url: string): void {
-    if (target()) {
+    if (target().startsWith('blob:')) {
       URL.revokeObjectURL(target());
     }
     target.set(url);
   }
 
   ngOnDestroy(): void {
+    this.profileRequest?.unsubscribe();
+    this.photoUpload?.unsubscribe();
+    this.resetPhotoPreview();
     this.photoRequests.unsubscribe();
     this.usernameCheck?.unsubscribe();
     this.suggestionCheck?.unsubscribe();
@@ -202,7 +347,7 @@ export class ProfilePage implements OnInit, OnDestroy {
   protected startEditing(): void {
     const user = this.currentUser();
 
-    if (!user) {
+    if (!user || !this.profileDetails()) {
       return;
     }
 
@@ -213,6 +358,7 @@ export class ProfilePage implements OnInit, OnDestroy {
     this.usernameFeedback.set('');
     this.email = user.email;
     this.phone = user.phone;
+    this.bio = this.profileDetails()?.bio ?? '';
     this.feedback.set('');
     this.editing.set(true);
   }
@@ -229,21 +375,38 @@ export class ProfilePage implements OnInit, OnDestroy {
   protected saveProfile(): void {
     const userId = this.currentUser()?.userId;
 
-    if (!userId || this.saving()) {
+    if (!userId || this.saving() || !this.profileDetails()) {
       return;
     }
 
     this.saving.set(true);
     this.feedback.set('');
 
-    this.auth
-      .updateProfile(userId, {
-        name: this.name.trim(),
-        username: this.username.trim(),
-        email: this.email.trim(),
-        phone: this.phone.trim(),
-      })
+    const user = this.currentUser()!;
+    const account = {
+      name: this.name.trim(),
+      username: this.username.trim(),
+      email: this.email.trim(),
+      phone: this.phone.trim(),
+    };
+    const accountChanged =
+      account.name !== user.name ||
+      account.username !== user.username ||
+      account.email !== user.email ||
+      account.phone !== user.phone;
+    const details = { bio: this.bio };
+    const detailsChanged = details.bio !== (this.profileDetails()?.bio ?? '');
+
+    const request = accountChanged ? this.auth.updateProfile(userId, account) : of(user);
+    request
       .pipe(
+        switchMap(() =>
+          detailsChanged
+            ? this.auth
+                .updateUserProfile(details)
+                .pipe(tap((profile) => this.applyProfileDetails(profile)))
+            : of(this.profileDetails()),
+        ),
         switchMap(() =>
           this.photo
             ? this.auth.uploadProfilePhoto(userId, this.photo).pipe(

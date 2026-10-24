@@ -23,7 +23,13 @@
         </svg>
       </button>
       <a class="profile-chip" routerLink="/profile" aria-label="Abrir seu perfil">
-        <span class="avatar avatar-lime">{{ initials }}</span>
+        <span class="avatar avatar-lime">
+          @if (profilePhoto()) {
+            <img [src]="profilePhoto()" [alt]="auth.currentUser()?.name" (error)="clearPhoto()" />
+          } @else {
+            {{ initials }}
+          }
+        </span>
         <span class="profile-name">{{ auth.currentUser()?.name }}</span>
         <span class="chevron">⌄</span>
       </a>

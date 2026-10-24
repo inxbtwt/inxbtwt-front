@@ -3,6 +3,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { catchError, forkJoin, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { ApiResponse } from '../components/dto/api/api-response';
 import { AuthUser } from '../components/dto/auth/auth-user';
+import { UserProfile } from '../components/dto/auth/user-profile';
 import { CsrfToken } from '../components/dto/auth/csrf-token';
 
 @Injectable({ providedIn: 'root' })
@@ -117,6 +118,28 @@ export class AuthService {
     );
   }
 
+  getUserProfile(): Observable<UserProfile> {
+    return this.http
+      .get<ApiResponse<UserProfile>>('/api/profiles/me', {
+        withCredentials: true,
+      })
+      .pipe(map((response) => response.data));
+  }
+
+  updateUserProfile(
+    profile: Partial<Pick<UserProfile, 'bio' | 'coverUrl'>>,
+  ): Observable<UserProfile> {
+    return this.csrf().pipe(
+      switchMap((csrf) =>
+        this.http.patch<ApiResponse<UserProfile>>('/api/profiles/me', profile, {
+          headers: { [csrf.headerName]: csrf.token },
+          withCredentials: true,
+        }),
+      ),
+      map((response) => response.data),
+    );
+  }
+
   checkUsername(username: string): Observable<boolean> {
     return this.checkAvailability('username', username);
   }
@@ -155,6 +178,14 @@ export class AuthService {
   }
 
   uploadProfilePhoto(userId: string, photo: File): Observable<{ url: string }> {
+    return this.uploadUserPhoto(userId, photo, 'PROFILE');
+  }
+
+  uploadUserPhoto(
+    userId: string,
+    photo: File,
+    type: 'PROFILE' | 'COVER',
+  ): Observable<{ url: string }> {
     const body = new FormData();
     body.append('photo', photo);
 
@@ -164,7 +195,7 @@ export class AuthService {
           `/api/users/${encodeURIComponent(userId)}/photo`,
           body,
           {
-            params: { type: 'PROFILE' },
+            params: { type },
             headers: { [csrf.headerName]: csrf.token },
             withCredentials: true,
           },
