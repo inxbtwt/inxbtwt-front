@@ -15,11 +15,12 @@ import { catchError, finalize, map, of, switchMap, Subscription, tap } from 'rxj
 import { ApiResponse } from '../../components/dto/api/api-response';
 import { UserProfile } from '../../components/dto/auth/user-profile';
 import { UserPhotoUrls } from '../../components/dto/auth/user-photo-urls';
+import { ProfileSearch } from '../../components/profile-search/profile-search';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-profile-page',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, ProfileSearch],
   templateUrl: './profile.page.html',
 })
 export class ProfilePage implements OnInit, OnDestroy {

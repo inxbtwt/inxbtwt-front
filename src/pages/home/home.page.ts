@@ -4,11 +4,12 @@ import { RouterLink } from '@angular/router';
 import { of, Subscription, switchMap } from 'rxjs';
 import { ApiResponse } from '../../components/dto/api/api-response';
 import { UserPhotoUrls } from '../../components/dto/auth/user-photo-urls';
+import { ProfileSearch } from '../../components/profile-search/profile-search';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-home-page',
-  imports: [RouterLink],
+  imports: [RouterLink, ProfileSearch],
   templateUrl: './home.page.html',
   styleUrl: './home.page.scss',
 })
