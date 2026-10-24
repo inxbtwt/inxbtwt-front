@@ -162,6 +162,7 @@ export class AuthPage implements OnDestroy {
   protected readonly passwordVisible = signal(false);
 
   protected email = '';
+  protected loginIdentifier = '';
   protected password = '';
   protected readonly submitting = signal(false);
   protected readonly error = signal('');
@@ -215,7 +216,7 @@ export class AuthPage implements OnDestroy {
           this.phone.trim(),
           this.password,
         )
-      : this.auth.login(this.email.trim(), this.password);
+      : this.auth.login(this.loginIdentifier.trim(), this.password);
 
     let photoUploadFailed = false;
     request
@@ -253,7 +254,7 @@ export class AuthPage implements OnDestroy {
           }
           this.error.set(
             response.status === 401
-              ? 'E-mail ou senha inválidos.'
+              ? 'E-mail, username ou senha inválidos.'
               : response.status === 400 || response.status === 409
                 ? response.error?.message || 'Confira os dados e tente novamente.'
                 : 'Não foi possível entrar. Verifique a conexão e tente novamente.',
