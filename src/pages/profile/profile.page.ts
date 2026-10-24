@@ -11,7 +11,6 @@ import { AuthService } from '../../services/auth.service';
   selector: 'app-profile-page',
   imports: [FormsModule, RouterLink],
   templateUrl: './profile.page.html',
-  styleUrl: './profile.page.scss',
 })
 export class ProfilePage implements OnInit {
   private readonly http = inject(HttpClient);
