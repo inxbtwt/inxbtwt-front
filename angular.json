@@ -61,7 +61,12 @@
               "buildTarget": "just-redesocial:build:development"
             }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "development",
+          "options": {
+            "proxyConfig": "proxy.conf.json",
+            "ssl": false,
+            "host": "localhost"
+          }
         },
         "test": {
           "builder": "@angular/build:unit-test"

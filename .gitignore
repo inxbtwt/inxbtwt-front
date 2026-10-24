@@ -42,3 +42,10 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Certificados locais
+/.certs/
+
+# Logs do servidor local
+/local-front.log
+/local-front-error.log
