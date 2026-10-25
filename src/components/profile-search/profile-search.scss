@@ -151,9 +151,14 @@ button:disabled {
 }
 @media (max-width: 760px) {
   :host {
-    width: min(46vw, 300px);
-    margin-left: auto;
-    margin-right: 14px;
+    flex: 1;
+    width: auto;
+    max-width: 300px;
+    margin-left: 22px;
+    margin-right: 12px;
+  }
+  .search {
+    position: static;
   }
   .search-input {
     height: 37px;
@@ -161,11 +166,33 @@ button:disabled {
     padding: 0 9px;
   }
   input {
-    font-size: 12px;
+    font-size: 16px;
   }
   .search-results {
-    width: min(88vw, 430px);
-    left: auto;
-    right: -35px;
+    display: flex;
+    flex-direction: column;
+    top: calc(100% + 8px);
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-height: min(60dvh, 520px, calc(100dvh - 150px));
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+  .search-heading,
+  .search-pages {
+    flex-shrink: 0;
+  }
+  .search-results ul {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .search-heading button {
+    width: 44px;
+    height: 44px;
+  }
+  .search-pages button {
+    min-height: 44px;
   }
 }
