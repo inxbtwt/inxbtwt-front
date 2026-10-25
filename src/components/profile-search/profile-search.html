@@ -31,10 +31,10 @@
         <p role="alert">{{ error() }}</p>
         <button class="retry" type="button" (click)="search()">Tentar novamente</button>
       } @else if (!results().length) {
-        <p role="status">Nenhum outro usuário encontrado com esse username.</p>
+        <p role="status">Nenhum usuário encontrado com esse username.</p>
       } @else {
         <ul>
-          @for (profile of results(); track profile.userId) {
+          @for (profile of results(); track profile.username) {
             <li>
               <a
                 data-profile-result
@@ -43,7 +43,7 @@
               >
                 <span class="result-avatar"
                   ><app-profile-image
-                    [userId]="profile.userId"
+                    [username]="profile.username"
                     [imageUrl]="profile.photoUrl"
                     [name]="profile.name"
                 /></span>

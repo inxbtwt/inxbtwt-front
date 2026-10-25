@@ -1,8 +1,11 @@
-export interface ProfileSummary {
-  userId: string;
+export interface ProfileSearchResult {
   name: string;
   username: string;
   photoUrl: string | null;
+}
+
+export interface ProfileSummary extends ProfileSearchResult {
+  userId: string;
 }
 
 export interface ProfileView extends ProfileSummary {
@@ -13,7 +16,7 @@ export interface ProfileView extends ProfileSummary {
 }
 
 export interface ProfileSearchPage {
-  content: ProfileSummary[];
+  content: ProfileSearchResult[];
   number: number;
   totalPages: number;
   totalElements: number;
