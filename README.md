@@ -31,6 +31,12 @@ npm run build
 npm test -- --watch=false
 ```
 
+## Busca de usuários
+
+A busca usa `GET /api/search?user=...&page=...&size=10`, com os cookies da sessão. A API principal encaminha a consulta à search-api pelo OpenFeign; os dois serviços precisam estar ativos. O interceptor e o proxy continuam ajustando o endereço conforme o environment.
+
+Os resultados contêm nome, username e foto, sem UUID. A lista identifica cada resultado pelo username e permite abrir o perfil pela mesma informação. Quando há foto, o componente consulta o perfil para obter o UUID necessário ao download autenticado da imagem. A busca pode incluir o próprio usuário, conforme o contrato atual do microsserviço.
+
 ## Environments
 
 A configuração da API fica em `src/environments/environment.ts`. O interceptor registrado em `app.config.ts` aplica `environment.apiUrl` às chamadas que começam com `/api`.

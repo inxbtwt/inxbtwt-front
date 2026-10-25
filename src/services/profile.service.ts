@@ -10,8 +10,8 @@ export class ProfileService {
 
   search(query: string, page = 0) {
     return this.http
-      .get<ApiResponse<ProfileSearchPage>>('/api/profiles', {
-        params: { query, page, size: 10 },
+      .get<ApiResponse<ProfileSearchPage>>('/api/search', {
+        params: { user: query, page, size: 10 },
         withCredentials: true,
       })
       .pipe(map((response) => response.data));

@@ -2,8 +2,7 @@ import { Component, DestroyRef, ElementRef, HostListener, inject, signal } from 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { catchError, map, of, Subject, switchMap, timer } from 'rxjs';
-import { ProfileSummary } from '../dto/profile/profile-search';
-import { AuthService } from '../../services/auth.service';
+import { ProfileSearchResult } from '../dto/profile/profile-search';
 import { ProfileService } from '../../services/profile.service';
 import { ProfileImage } from '../profile-image/profile-image';
 
@@ -15,14 +14,13 @@ import { ProfileImage } from '../profile-image/profile-image';
 })
 export class ProfileSearch {
   private readonly profiles = inject(ProfileService);
-  private readonly auth = inject(AuthService);
   private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly requests = new Subject<{ query: string; page: number; delay: number }>();
   protected readonly query = signal('');
   protected readonly open = signal(false);
   protected readonly loading = signal(false);
   protected readonly error = signal('');
-  protected readonly results = signal<ProfileSummary[]>([]);
+  protected readonly results = signal<ProfileSearchResult[]>([]);
   protected readonly page = signal(0);
   protected readonly totalPages = signal(0);
 
@@ -46,11 +44,7 @@ export class ProfileSearch {
         this.loading.set(false);
         this.error.set(result?.error ?? '');
         if (result?.response) {
-          this.results.set(
-            result.response.content.filter(
-              (profile) => profile.userId !== this.auth.currentUser()?.userId,
-            ),
-          );
+          this.results.set(result.response.content);
           this.page.set(result.response.number);
           this.totalPages.set(result.response.totalPages);
         }

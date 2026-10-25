@@ -1,4 +1,5 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { switchMap } from 'rxjs';
 import { ProfileService } from '../../services/profile.service';
 
 @Component({
@@ -25,7 +26,8 @@ import { ProfileService } from '../../services/profile.service';
 })
 export class ProfileImage {
   private readonly profiles = inject(ProfileService);
-  readonly userId = input.required<string>();
+  readonly userId = input('');
+  readonly username = input('');
   readonly imageUrl = input<string | null>(null);
   readonly name = input('');
   readonly fit = input<'cover' | 'contain'>('cover');
@@ -43,11 +45,17 @@ export class ProfileImage {
   constructor() {
     effect((onCleanup) => {
       const userId = this.userId();
+      const username = this.username();
       const url = this.imageUrl();
       this.source.set('');
-      if (!url || !userId) return;
+      if (!url || (!userId && !username)) return;
       let objectUrl = '';
-      const request = this.profiles.downloadPhoto(userId, url).subscribe({
+      const photo = userId
+        ? this.profiles.downloadPhoto(userId, url)
+        : this.profiles
+            .getByUsername(username)
+            .pipe(switchMap((profile) => this.profiles.downloadPhoto(profile.userId, url)));
+      const request = photo.subscribe({
         next: (photo) => {
           objectUrl = URL.createObjectURL(photo);
           this.source.set(objectUrl);
