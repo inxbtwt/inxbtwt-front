@@ -30,3 +30,13 @@ A rota inicial verifica `/me`: usuários autenticados seguem para `/home`; visit
 npm run build
 npm test -- --watch=false
 ```
+
+## Environments
+
+A configuração da API fica em `src/environments/environment.ts`. O interceptor registrado em `app.config.ts` aplica `environment.apiUrl` às chamadas que começam com `/api`.
+
+- `npm start`: usa `environment.development.ts`, com o proxy local para a porta 8081.
+- `npm run build`: usa `environment.ts`, para produção.
+- `npm run build -- --configuration production,local`: usa `environment.local.ts` com as otimizações de produção, para o front na Vercel acessando o back-end local por túnel.
+
+No deploy de testes, `apiUrl` permanece `/api` para preservar os cookies na mesma origem. Configure a URL HTTPS do túnel em `BACKEND_TUNNEL_URL`, no GitHub Environment `local` do repositório `w-just`. O proxy da Vercel usa essa URL. Quando ela mudar, execute novamente o deploy. A pipeline busca a main do front, portanto publique os arquivos de environment nessa branch antes de executá-la.
